@@ -11,8 +11,6 @@ const Home = async () => {
     redirect("/sign-in");
   } else if (!session.user.emailVerified) {
     redirect(`/email-verification?email=${session.user.email}`);
-  } else {
-    redirect("/p");
   }
   return <div>home</div>;
 };
