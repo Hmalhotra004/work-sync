@@ -1,25 +1,20 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-const Home = () => {
-  return (
-    <div className="flex flex-col gap-y-4 w-full justify-center items-center h-full">
-      Home
-      <Button>Primary</Button>
-      <Button variant="destructive">Delete</Button>
-      <Button variant="secondary">sec</Button>
-      <Button variant="ghost">Ghost</Button>
-      <Button variant="muted">Muted</Button>
-      <Button variant="teritary">tetrer</Button>
-      <Button
-        variant="teritary"
-        disabled
-      >
-        tetrer
-      </Button>
-      <Input />
-    </div>
-  );
+const Home = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/sign-in");
+  } else if (!session.user.emailVerified) {
+    redirect(`/email-verification?email=${session.user.email}`);
+  } else {
+    redirect("/p");
+  }
+  return <div>home</div>;
 };
 
 export default Home;
