@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import HomeView from "@/views/HomeView";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -12,7 +13,8 @@ const Home = async () => {
   } else if (!session.user.emailVerified) {
     redirect(`/email-verification?email=${session.user.email}`);
   }
-  return <div>home</div>;
+
+  return <HomeView />;
 };
 
 export default Home;
