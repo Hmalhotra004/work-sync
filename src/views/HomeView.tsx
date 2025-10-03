@@ -1,10 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/authClient";
+import { useTRPC } from "@/trpc/client";
 import { useRouter } from "next/navigation";
 
 const HomeView = () => {
-  const { data, isPending } = authClient.useSession();
+  const trpc = useTRPC();
 
   const router = useRouter();
 

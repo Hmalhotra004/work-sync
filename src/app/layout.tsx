@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 
+import { TRPCReactProvider } from "@/trpc/client";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,20 +22,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-    >
-      <body className={cn(inter.className, "antialiased, min-h-screen")}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
+    <TRPCReactProvider>
+      <html
+        lang="en"
+        suppressHydrationWarning
+      >
+        <body className={cn(inter.className, "antialiased, min-h-screen")}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    </TRPCReactProvider>
   );
 }
