@@ -1,13 +1,9 @@
 "use client";
-import UserButton from "@/components/UserButton";
-import { useTRPC } from "@/trpc/client";
 
 const HomeView = () => {
-  const trpc = useTRPC();
-
   return (
     <div>
-      <UserButton />
+      <h1>Home</h1>
     </div>
   );
 };
