@@ -77,6 +77,7 @@ export const workspace = pgTable("workspace", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   name: text("name").notNull(),
+  image: text("image"),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
