@@ -9,6 +9,8 @@ import { useTRPC } from "@/trpc/client";
 import { WorkspaceType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import Image from "next/image";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -30,7 +32,13 @@ interface Props {
 
 const CreateWorkspace = ({ onCancel, onSuccess, initialValues }: Props) => {
   const trpc = useTRPC();
-  // const queryClient = useQueryClient();
+  const [isPending, setIsPending] = useState(false);
+
+  const [preview, setPreview] = useState<string | null>(
+    initialValues?.image ?? null
+  );
+
+  const [file, setFile] = useState<File | null>(null);
 
   const createWorkspace = useMutation(
     trpc.workspace.create.mutationOptions({
@@ -48,22 +56,65 @@ const CreateWorkspace = ({ onCancel, onSuccess, initialValues }: Props) => {
     })
   );
 
+  const getSignature = useMutation(
+    trpc.cloudinary.getUploadSignature.mutationOptions()
+  );
+
   const form = useForm<z.infer<typeof createWorkspaceSchema>>({
     resolver: zodResolver(createWorkspaceSchema),
     defaultValues: {
-      name: "",
+      name: initialValues?.name ?? "",
+      image: initialValues?.image ?? undefined,
     },
   });
 
   const isEdit = !!initialValues?.id;
-  const isPending = createWorkspace.isPending;
 
   const onSubmit = async (values: z.infer<typeof createWorkspaceSchema>) => {
-    if (isEdit) {
-      console.log("edit");
-    } else {
+    try {
+      setIsPending(true);
+      let imageUrl = values.image;
+
+      if (file) {
+        const { cloudName, apiKey, timestamp, signature, folder } =
+          await getSignature.mutateAsync({ folder: "Workspace" });
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", apiKey);
+        formData.append("timestamp", timestamp.toString());
+        formData.append("signature", signature);
+        formData.append("folder", folder);
+
+        const uploadRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.secure_url;
+      }
+
+      if (isEdit) {
+        console.log("edit");
+      } else {
+        await createWorkspace.mutateAsync({
+          name: values.name,
+          image: imageUrl,
+        });
+      }
+
       form.reset();
-      createWorkspace.mutateAsync(values);
+      setPreview(null);
+      setFile(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to create workspace");
+    } finally {
+      setIsPending(true);
     }
   };
 
@@ -99,6 +150,56 @@ const CreateWorkspace = ({ onCancel, onSuccess, initialValues }: Props) => {
                       disabled={isPending}
                       field={field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              name="image"
+              control={form.control}
+              render={() => (
+                <FormItem>
+                  <FormLabel>Workspace Image</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-3">
+                      {preview && (
+                        <Image
+                          src={preview}
+                          alt="Workspace Preview"
+                          width={64}
+                          height={64}
+                          className="rounded-md border object-cover"
+                        />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isPending}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          // ✅ Validate type
+                          if (!file.type.startsWith("image/")) {
+                            toast.error("Only image files are allowed");
+                            e.target.value = "";
+                            return;
+                          }
+
+                          // ✅ Validate size (<5MB)
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error("Image size must be less than 5MB");
+                            e.target.value = "";
+                            return;
+                          }
+
+                          setFile(file);
+                          setPreview(URL.createObjectURL(file));
+                        }}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
