@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { workspace } from "@/db/schema";
+import { member, workspace } from "@/db/schema";
 import cloudinary from "@/lib/cloudinary";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
 import { createWorkspaceSchema } from "@/schemas";
@@ -11,9 +11,36 @@ import z from "zod";
 export const workspaceRouter = createTRPCRouter({
   getMany: protectedProcedure.query(async ({ ctx }) => {
     const userWorkspaces = await db
-      .select()
+      .select({
+        id: workspace.id,
+        name: workspace.name,
+        image: workspace.image,
+        userId: workspace.userId,
+        role: member.role,
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
+      })
       .from(workspace)
-      .where(eq(workspace.userId, ctx.auth.user.id));
+      .innerJoin(member, eq(member.workspaceId, workspace.id))
+      .where(eq(member.userId, ctx.auth.user.id));
+
+    return userWorkspaces;
+  }),
+
+  getOne: protectedProcedure.query(async ({ ctx }) => {
+    const [userWorkspaces] = await db
+      .select({
+        id: workspace.id,
+        name: workspace.name,
+        image: workspace.image,
+        userId: workspace.userId,
+        role: member.role,
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
+      })
+      .from(workspace)
+      .innerJoin(member, eq(member.workspaceId, workspace.id))
+      .where(eq(member.userId, ctx.auth.user.id));
 
     return userWorkspaces;
   }),
@@ -34,6 +61,12 @@ export const workspaceRouter = createTRPCRouter({
         .insert(workspace)
         .values({ name, image, userId: ctx.auth.user.id })
         .returning();
+
+      await db.insert(member).values({
+        role: "admin",
+        userId: ctx.auth.user.id,
+        workspaceId: createdWorkspace.id,
+      });
 
       return createdWorkspace;
     }),
