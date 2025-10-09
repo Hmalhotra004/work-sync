@@ -1,3 +1,4 @@
+import { generateInviteCode } from "@/lib/utils";
 import { boolean, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 
@@ -78,6 +79,9 @@ export const workspace = pgTable("workspace", {
     .$defaultFn(() => nanoid()),
   name: text("name").notNull(),
   image: text("image"),
+  inviteCode: text("invite_code")
+    .notNull()
+    .$defaultFn(() => generateInviteCode(6)),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
