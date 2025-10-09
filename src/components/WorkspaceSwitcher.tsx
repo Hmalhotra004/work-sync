@@ -1,5 +1,6 @@
 "use client";
 
+import { useCreateWorkspaceModal } from "@/hooks/useCreateWorkspaceModal";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ const WorkspaceSwitcher = () => {
   const trpc = useTRPC();
   const router = useRouter();
   const workspaceId = useWorkspaceId();
+  const { open } = useCreateWorkspaceModal();
 
   const { data: workspaces, isLoading } = useQuery(
     trpc.workspace.getMany.queryOptions()
@@ -35,7 +37,10 @@ const WorkspaceSwitcher = () => {
     <div className="flex flex-col gap-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs uppercase text-foreground-500">Workspaces</p>
-        <RiAddCircleFill className="size-5 text-foreground-500 cursor-pointer hover:opacity-75 transition" />
+        <RiAddCircleFill
+          onClick={open}
+          className="size-5 text-foreground-500 cursor-pointer hover:opacity-75 transition"
+        />
       </div>
 
       <Select
