@@ -15,6 +15,27 @@
       "when": 1759843480387,
       "tag": "0001_workspace_table",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759931700705,
+      "tag": "0002_workspace_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759996909285,
+      "tag": "0003_memeber_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1760002771063,
+      "tag": "0004_invite_code",
+      "breakpoints": true
     }
   ]
 }

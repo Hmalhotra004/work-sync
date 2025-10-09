@@ -1,11 +1,12 @@
+import { inferRouterOutputs } from "@trpc/server";
 import { LucideProps } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { type IconType as ReactIconType } from "react-icons/lib";
 import { UrlObject } from "url";
-import z from "zod";
-import { selectWorkspaceSchema } from "./schemas";
+import { AppRouter } from "./trpc/routers/_app";
 
-export type WorkspaceType = z.infer<typeof selectWorkspaceSchema>;
+export type WorkspaceType =
+  inferRouterOutputs<AppRouter>["workspace"]["getOne"];
 
 export type IconType =
   | ReactIconType

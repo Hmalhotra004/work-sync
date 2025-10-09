@@ -22,7 +22,7 @@ const UserButton = () => {
 
   if (isPending) {
     return (
-      <div className="size-10 rounded-full flex items-center justify-around bg-neutral-200 border border-neutral-300">
+      <div className="size-10 rounded-full flex items-center justify-around bg-background-200 border border-border-300">
         <Loader className="size-4 text-muted-foreground" />
       </div>
     );
@@ -43,8 +43,8 @@ const UserButton = () => {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="outline-none relative">
-        <Avatar className="size-10 hover:opacity-75 transition border border-neutral-300 cursor-pointer">
-          <AvatarFallback className="bg-neutral-200 font-medium text-neutral-500 flex items-center justify-center">
+        <Avatar className="size-10 hover:opacity-75 transition border border-border-300 cursor-pointer">
+          <AvatarFallback className="bg-background-200 font-medium text-foreground-500 flex items-center justify-center">
             {avatarFallback}
           </AvatarFallback>
         </Avatar>
@@ -57,15 +57,15 @@ const UserButton = () => {
         sideOffset={10}
       >
         <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
-          <Avatar className="size-[52px] border border-neutral-300 cursor-pointer">
-            <AvatarFallback className="bg-neutral-200 text-xl font-medium text-neutral-500 flex items-center justify-center">
+          <Avatar className="size-[52px] border border-border-300 cursor-pointer">
+            <AvatarFallback className="bg-background-200 text-xl font-medium text-foreground-500 flex items-center justify-center">
               {avatarFallback}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex flex-col items-center justify-center gap-y-1">
             <p className="text-sm font-medium text-foreground">{user.name}</p>
-            <p className="text-xs text-neutral-500">{user.email}</p>
+            <p className="text-xs text-foreground-500">{user.email}</p>
           </div>
         </div>
 
