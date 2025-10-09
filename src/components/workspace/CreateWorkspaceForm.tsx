@@ -4,6 +4,7 @@ import DottedSeparator from "@/components/DottedSeparator";
 import FormInput from "@/components/form/FormInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { createWorkspaceSchema } from "@/schemas";
 import { useTRPC } from "@/trpc/client";
 import { WorkspaceType } from "@/types";
@@ -11,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon, X } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -24,7 +26,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useRouter } from "next/navigation";
 
 interface Props {
   onSuccess?: () => void;
@@ -53,7 +54,7 @@ const CreateWorkspaceForm = ({ onCancel, initialValues }: Props) => {
         );
 
         toast.success("Workspace Created");
-        router.push(`/workspaces/${data.id}`);
+        router.replace(`/workspaces/${data.id}`);
       },
 
       onError: (error) => {
@@ -248,6 +249,7 @@ const CreateWorkspaceForm = ({ onCancel, initialValues }: Props) => {
             size="lg"
             onClick={onCancel}
             disabled={isPending}
+            className={cn(!onCancel && "invisible")}
           >
             Cancel
           </Button>

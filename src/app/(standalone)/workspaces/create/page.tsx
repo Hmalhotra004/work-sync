@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import CreateWorkspaceView from "@/views/workspaces/CreateWorkspaceView";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -13,7 +14,7 @@ const CreateWorkspacePage = async () => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  return <div>CreateWorkspacePage</div>;
+  return <CreateWorkspaceView />;
 };
 
 export default CreateWorkspacePage;
