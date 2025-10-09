@@ -9,7 +9,7 @@ import { createWorkspaceSchema } from "@/schemas";
 import { useTRPC } from "@/trpc/client";
 import { WorkspaceType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -34,12 +34,12 @@ interface Props {
 
 const CreateWorkspace = ({ onCancel, onSuccess, initialValues }: Props) => {
   const trpc = useTRPC();
-  const [isPending, setIsPending] = useState(false);
+  const queryClient = useQueryClient();
 
+  const [isPending, setIsPending] = useState(false);
   const [preview, setPreview] = useState<string | null>(
     initialValues?.image ?? null
   );
-
   const [file, setFile] = useState<File | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,9 +47,9 @@ const CreateWorkspace = ({ onCancel, onSuccess, initialValues }: Props) => {
   const createWorkspace = useMutation(
     trpc.workspace.create.mutationOptions({
       onSuccess: async () => {
-        // await queryClient.invalidateQueries(
-        //   trpc.workspace.getMany.queryOptions()
-        // );
+        await queryClient.invalidateQueries(
+          trpc.workspace.getMany.queryOptions()
+        );
         toast.success("Workspace Created");
         onSuccess?.();
       },

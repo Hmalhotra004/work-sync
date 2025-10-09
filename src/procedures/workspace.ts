@@ -9,6 +9,15 @@ import { and, eq } from "drizzle-orm";
 import z from "zod";
 
 export const workspaceRouter = createTRPCRouter({
+  getMany: protectedProcedure.query(async ({ ctx }) => {
+    const userWorkspaces = await db
+      .select()
+      .from(workspace)
+      .where(eq(workspace.userId, ctx.auth.user.id));
+
+    return userWorkspaces;
+  }),
+
   create: protectedProcedure
     .input(createWorkspaceSchema)
     .mutation(async ({ ctx, input }) => {

@@ -14,7 +14,16 @@ const Home = async () => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  return <HomeView />;
+  return (
+    <HomeView />
+    // <HydrationBoundary state={dehydrate(queryClient)}>
+    //   <Suspense fallback={<Loader />}>
+    //     {/* TODO:Change error */}
+    //     <ErrorBoundary fallback={<div>error</div>}>
+    //     </ErrorBoundary>
+    //   </Suspense>
+    // </HydrationBoundary>
+  );
 };
 
 export default Home;
