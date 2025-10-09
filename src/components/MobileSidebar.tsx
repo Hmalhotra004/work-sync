@@ -26,7 +26,7 @@ const MobileSidebar = () => {
           variant="secondary"
           className="lg:hidden"
         >
-          <MenuIcon className="size-4 text-neutral-500" />
+          <MenuIcon className="size-4 text-foreground-500" />
         </Button>
       </SheetTrigger>
       <SheetContent
