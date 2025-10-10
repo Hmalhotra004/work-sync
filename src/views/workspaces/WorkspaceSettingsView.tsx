@@ -1,5 +1,6 @@
 "use client";
 
+import WorkspaceForm from "@/components/workspace/WorkspaceForm";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
@@ -14,8 +15,7 @@ const WorkspaceSettingsView = ({ id }: Props) => {
 
   return (
     <div>
-      WorkspaceSettingsView
-      {JSON.stringify(data)}
+      <WorkspaceForm initialValues={data} />
     </div>
   );
 };

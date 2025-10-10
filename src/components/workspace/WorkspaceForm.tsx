@@ -33,7 +33,7 @@ interface Props {
   initialValues?: WorkspaceType;
 }
 
-const CreateWorkspaceForm = ({ onCancel, initialValues }: Props) => {
+const WorkspaceForm = ({ onCancel, initialValues }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -266,4 +266,4 @@ const CreateWorkspaceForm = ({ onCancel, initialValues }: Props) => {
   );
 };
 
-export default CreateWorkspaceForm;
+export default WorkspaceForm;

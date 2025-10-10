@@ -2,7 +2,7 @@
 
 import ResponsiveDialog from "@/components/ui/responsive-dialog";
 import { useCreateWorkspaceModal } from "@/hooks/useCreateWorkspaceModal";
-import CreateWorkspaceForm from "./CreateWorkspaceForm";
+import WorkspaceForm from "./WorkspaceForm";
 
 const CreateWorkspaceModal = () => {
   const { isOpen, setIsOpen, close } = useCreateWorkspaceModal();
@@ -14,7 +14,7 @@ const CreateWorkspaceModal = () => {
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CreateWorkspaceForm
+      <WorkspaceForm
         onSuccess={close}
         onCancel={close}
       />

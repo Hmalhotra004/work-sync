@@ -2,7 +2,7 @@
 
 import DottedSeparator from "@/components/DottedSeparator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import CreateWorkspaceForm from "@/components/workspace/CreateWorkspaceForm";
+import WorkspaceForm from "@/components/workspace/WorkspaceForm";
 
 const CreateWorkspaceView = () => {
   return (
@@ -19,7 +19,7 @@ const CreateWorkspaceView = () => {
         </div>
 
         <CardContent className="px-7">
-          <CreateWorkspaceForm />
+          <WorkspaceForm />
         </CardContent>
       </Card>
     </div>
