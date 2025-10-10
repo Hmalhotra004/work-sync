@@ -192,7 +192,7 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         <FormField
           name="image"
           control={form.control}
-          render={() => (
+          render={({ field }) => (
             <div className="flex flex-col gap-y-2">
               <div className="flex items-center gap-x-5">
                 {preview ? (
@@ -225,16 +225,29 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                     disabled={isPending}
                     onChange={handleImageSelect}
                   />
-                  <Button
-                    type="button"
-                    variant="teritary"
-                    size="xs"
-                    className="mt-2 w-fit"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={isPending}
-                  >
-                    Upload Image
-                  </Button>
+                  {field.value ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="xs"
+                      className="mt-2 w-fit"
+                      onClick={clearImg}
+                      disabled={isPending}
+                    >
+                      Remove Image
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="teritary"
+                      size="xs"
+                      className="mt-2 w-fit"
+                      onClick={() => inputRef.current?.click()}
+                      disabled={isPending}
+                    >
+                      Upload Image
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
