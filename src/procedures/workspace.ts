@@ -35,7 +35,7 @@ export const workspaceRouter = createTRPCRouter({
   getOne: protectedProcedure.input(IdSchema).query(async ({ ctx, input }) => {
     const { id } = input;
 
-    const [userWorkspaces] = await db
+    const [userWorkspace] = await db
       .select({
         id: workspace.id,
         name: workspace.name,
@@ -49,7 +49,14 @@ export const workspaceRouter = createTRPCRouter({
       .innerJoin(member, eq(member.workspaceId, workspace.id))
       .where(and(eq(workspace.id, id), eq(member.userId, ctx.auth.user.id)));
 
-    return userWorkspaces;
+    if (!userWorkspace) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      });
+    }
+
+    return userWorkspace;
   }),
 
   create: protectedProcedure
