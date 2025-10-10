@@ -6,6 +6,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface Props {
   params: Promise<{ workspaceId: string }>;
@@ -30,8 +31,11 @@ const Settings = async ({ params }: Props) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      {/* FIXME:fix */}
       <Suspense fallback={<Loader />}>
-        <WorkspaceSettingsView id={id} />
+        <ErrorBoundary fallback={<></>}>
+          <WorkspaceSettingsView id={id} />
+        </ErrorBoundary>
       </Suspense>
     </HydrationBoundary>
   );
