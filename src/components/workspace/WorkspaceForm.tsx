@@ -139,6 +139,8 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
 
       if (file) {
         imageUrl = await uploadImageToCloudinary(file);
+      } else if (isEdit && !file) {
+        imageUrl = initialValues?.image ?? undefined;
       }
 
       if (isEdit) {
