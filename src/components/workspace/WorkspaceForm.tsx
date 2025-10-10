@@ -49,12 +49,32 @@ const WorkspaceForm = ({ onCancel, initialValues }: Props) => {
   const createWorkspace = useMutation(
     trpc.workspace.create.mutationOptions({
       onSuccess: async (data) => {
+        form.reset();
+        setPreview(null);
+        setFile(null);
+
         await queryClient.invalidateQueries(
           trpc.workspace.getMany.queryOptions()
         );
 
         toast.success("Workspace Created");
         router.replace(`/workspaces/${data.id}`);
+      },
+
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    })
+  );
+
+  const updateWorkspace = useMutation(
+    trpc.workspace.update.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.workspace.getMany.queryOptions()
+        );
+
+        toast.success("Workspace Updated");
       },
 
       onError: (error) => {
@@ -106,17 +126,17 @@ const WorkspaceForm = ({ onCancel, initialValues }: Props) => {
       }
 
       if (isEdit) {
-        console.log("edit");
+        await updateWorkspace.mutateAsync({
+          id: initialValues.id,
+          name: values.name,
+          image: imageUrl,
+        });
       } else {
         await createWorkspace.mutateAsync({
           name: values.name,
           image: imageUrl,
         });
       }
-
-      form.reset();
-      setPreview(null);
-      setFile(null);
     } catch (error) {
       console.error(error);
       toast.error("Failed to create workspace");
