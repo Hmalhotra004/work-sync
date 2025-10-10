@@ -2,11 +2,16 @@ import { db } from "@/db";
 import { member, workspace } from "@/db/schema";
 import cloudinary from "@/lib/cloudinary";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
-import { createWorkspaceSchema } from "@/schemas";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import z from "zod";
+
+import {
+  createWorkspaceSchema,
+  IdSchema,
+  updateWorkspaceSchema,
+} from "@/schemas";
 
 export const workspaceRouter = createTRPCRouter({
   getMany: protectedProcedure.query(async ({ ctx }) => {
@@ -27,7 +32,9 @@ export const workspaceRouter = createTRPCRouter({
     return userWorkspaces;
   }),
 
-  getOne: protectedProcedure.query(async ({ ctx }) => {
+  getOne: protectedProcedure.input(IdSchema).query(async ({ ctx, input }) => {
+    const { id } = input;
+
     const [userWorkspaces] = await db
       .select({
         id: workspace.id,
@@ -40,7 +47,7 @@ export const workspaceRouter = createTRPCRouter({
       })
       .from(workspace)
       .innerJoin(member, eq(member.workspaceId, workspace.id))
-      .where(eq(member.userId, ctx.auth.user.id));
+      .where(and(eq(workspace.id, id), eq(member.userId, ctx.auth.user.id)));
 
     return userWorkspaces;
   }),
@@ -69,6 +76,45 @@ export const workspaceRouter = createTRPCRouter({
       });
 
       return createdWorkspace;
+    }),
+
+  update: protectedProcedure
+    .input(updateWorkspaceSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { id, image, name } = input;
+
+      const [memberRecord] = await db
+        .select()
+        .from(member)
+        .where(
+          and(eq(member.workspaceId, id), eq(member.userId, ctx.auth.user.id))
+        )
+        .limit(1);
+
+      if (!memberRecord || memberRecord.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can update this workspace.",
+        });
+      }
+
+      const [updatedWorkspace] = await db
+        .update(workspace)
+        .set({
+          name,
+          image,
+        })
+        .where(eq(workspace.id, id))
+        .returning();
+
+      if (!updatedWorkspace) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found.",
+        });
+      }
+
+      return updatedWorkspace;
     }),
 
   delete: protectedProcedure

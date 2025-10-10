@@ -17,3 +17,10 @@ export type IconType =
 export type HrefType =
   | UrlObject
   | __next_route_internal_types__.RouteImpl<UrlObject>;
+
+export type RouteType = {
+  label: string;
+  href: string;
+  icon: IconType;
+  activeIcon: IconType;
+}[];
