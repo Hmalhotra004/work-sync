@@ -127,14 +127,13 @@ export const workspaceRouter = createTRPCRouter({
     .input(IdSchema)
     .mutation(async ({ ctx, input }) => {
       const [workspaceToDelete] = await db
-        .select({ image: workspace.image })
+        .select({ image: workspace.image, role: member.role })
         .from(workspace)
         .innerJoin(member, eq(member.workspaceId, workspace.id))
         .where(
           and(
             eq(workspace.id, input.id),
-            eq(workspace.userId, ctx.auth.user.id),
-            eq(member.role, "admin")
+            eq(workspace.userId, ctx.auth.user.id)
           )
         );
 
@@ -142,6 +141,12 @@ export const workspaceRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Workspace not found",
+        });
+
+      if (workspaceToDelete.role !== "admin")
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Only admin can update a workspace",
         });
 
       //  Delete image from Cloudinary if exists
@@ -172,14 +177,13 @@ export const workspaceRouter = createTRPCRouter({
     .input(IdSchema)
     .mutation(async ({ ctx, input }) => {
       const [workspaceToDelete] = await db
-        .select({ id: workspace.id, image: workspace.image })
+        .select({ id: workspace.id, image: workspace.image, role: member.role })
         .from(workspace)
         .innerJoin(member, eq(member.workspaceId, workspace.id))
         .where(
           and(
             eq(workspace.id, input.id),
-            eq(workspace.userId, ctx.auth.user.id),
-            eq(member.role, "admin")
+            eq(workspace.userId, ctx.auth.user.id)
           )
         );
 
@@ -187,6 +191,12 @@ export const workspaceRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Workspace not found",
+        });
+
+      if (workspaceToDelete.role !== "admin")
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Only admin can delete a workspace",
         });
 
       //  Delete image from Cloudinary if exists

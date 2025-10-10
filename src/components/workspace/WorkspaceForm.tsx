@@ -74,6 +74,9 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         await queryClient.invalidateQueries(
           trpc.workspace.getMany.queryOptions()
         );
+        await queryClient.invalidateQueries(
+          trpc.workspace.getOne.queryOptions({ id: initialValues!.id! })
+        );
         toast.success("Workspace Updated");
         onSuccess?.();
       },
@@ -172,8 +175,11 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         form.reset();
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to save workspace");
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred");
+      }
     } finally {
       setIsPending(false);
     }
