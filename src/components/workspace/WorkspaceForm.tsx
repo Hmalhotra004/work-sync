@@ -81,6 +81,10 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     })
   );
 
+  const deleteWorkspaceImage = useMutation(
+    trpc.workspace.deleteWorkspaceImage.mutationOptions()
+  );
+
   const getSignature = useMutation(
     trpc.cloudinary.getUploadSignature.mutationOptions()
   );
@@ -138,9 +142,18 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
       let imageUrl = values.image;
 
       if (file) {
+        if (isEdit && initialValues.image) {
+          await deleteWorkspaceImage.mutateAsync({ id: initialValues.id });
+        }
+
         imageUrl = await uploadImageToCloudinary(file);
       } else if (isEdit && !file) {
-        imageUrl = initialValues?.image ?? undefined;
+        if (preview) {
+          imageUrl = preview;
+        } else {
+          await deleteWorkspaceImage.mutateAsync({ id: initialValues.id });
+          imageUrl = undefined;
+        }
       }
 
       if (isEdit) {

@@ -5,7 +5,6 @@ import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
-import z from "zod";
 
 import {
   createWorkspaceSchema,
@@ -124,16 +123,63 @@ export const workspaceRouter = createTRPCRouter({
       return updatedWorkspace;
     }),
 
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+  deleteWorkspaceImage: protectedProcedure
+    .input(IdSchema)
     .mutation(async ({ ctx, input }) => {
       const [workspaceToDelete] = await db
-        .select()
+        .select({ image: workspace.image })
         .from(workspace)
+        .innerJoin(member, eq(member.workspaceId, workspace.id))
         .where(
           and(
             eq(workspace.id, input.id),
-            eq(workspace.userId, ctx.auth.user.id)
+            eq(workspace.userId, ctx.auth.user.id),
+            eq(member.role, "admin")
+          )
+        );
+
+      if (!workspaceToDelete)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+
+      //  Delete image from Cloudinary if exists
+      if (workspaceToDelete.image) {
+        try {
+          // Extract Cloudinary public_id from URL
+          const match = workspaceToDelete.image.match(
+            /\/upload\/v\d+\/(.+)\.[a-zA-Z0-9]+$/
+          );
+          const publicId = match ? match[1] : null;
+
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (err) {
+          console.error("Failed to delete image from Cloudinary:", err);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Something went wrong",
+          });
+        }
+      }
+
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(IdSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [workspaceToDelete] = await db
+        .select({ id: workspace.id, image: workspace.image })
+        .from(workspace)
+        .innerJoin(member, eq(member.workspaceId, workspace.id))
+        .where(
+          and(
+            eq(workspace.id, input.id),
+            eq(workspace.userId, ctx.auth.user.id),
+            eq(member.role, "admin")
           )
         );
 
