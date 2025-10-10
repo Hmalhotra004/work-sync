@@ -4,22 +4,28 @@ import DottedSeparator from "@/components/DottedSeparator";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import WorkspaceForm from "@/components/workspace/WorkspaceForm";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useTRPC } from "@/trpc/client";
+import { CheckIcon, CopyIcon, RefreshCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 interface Props {
   id: string;
 }
 
 const WorkspaceSettingsView = ({ id }: Props) => {
+  const [copied, setCopied] = useState(false);
+
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -39,9 +45,28 @@ const WorkspaceSettingsView = ({ id }: Props) => {
     })
   );
 
+  const resetCode = useMutation(
+    trpc.workspace.resetInviteCode.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.workspace.getOne.queryOptions({ id: data.id })
+        );
+        toast.success("Invite Code reset Success");
+      },
+
+      onError: (error) => toast.error(error.message),
+    })
+  );
+
   const [DeleteDialog, confirmDelete] = useConfirm(
     "Delete Workspace",
     "This action cannot be undone",
+    "destructive"
+  );
+
+  const [ResetDialog, confirmReset] = useConfirm(
+    "Reset Invite Link",
+    "This will invalidate the current invite link",
     "destructive"
   );
 
@@ -53,9 +78,31 @@ const WorkspaceSettingsView = ({ id }: Props) => {
     await deleteWorkspace.mutateAsync({ id: data.id });
   }
 
+  async function handleReset() {
+    const ok = await confirmReset();
+
+    if (!ok) return;
+
+    await resetCode.mutateAsync({ id: data.id, join: false });
+  }
+
+  async function handleCopyInviteLink() {
+    setCopied(true);
+
+    navigator.clipboard.writeText(fullInviteLink).then(() => {
+      toast.success("Copied");
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    });
+  }
+
+  const fullInviteLink = `${window.location.origin}/workspaces/${data.id}/join/${data.inviteCode}`;
+
   return (
     <>
       <DeleteDialog />
+      <ResetDialog />
 
       <div className="h-full w-full flex flex-col gap-y-2">
         <Card className="w-full border-none shadow-none">
@@ -63,7 +110,6 @@ const WorkspaceSettingsView = ({ id }: Props) => {
             <CardTitle className="text-xl font-bold">
               Edit your workspace
             </CardTitle>
-            o
           </CardHeader>
 
           <div className="px-7">
@@ -72,6 +118,51 @@ const WorkspaceSettingsView = ({ id }: Props) => {
 
           <CardContent className="px-7">
             <WorkspaceForm initialValues={data} />
+          </CardContent>
+        </Card>
+
+        <Card className="w-full border-none shadow-none bg-background-100">
+          <CardContent className="px-7">
+            <div className="flex flex-col justify-center">
+              <div className="flex flex-col">
+                <h3 className="font-bold">Invite Members</h3>
+                <p className="text-sm text-muted-foreground">
+                  Use the invite link to add members to your workspace.
+                </p>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center gap-x-2">
+                  <Input
+                    disabled
+                    value={fullInviteLink}
+                  />
+                  <Button
+                    variant="teritary"
+                    className="size-12"
+                    onClick={handleCopyInviteLink}
+                    disabled={resetCode.isPending}
+                  >
+                    {copied ? (
+                      <CheckIcon className="size-5" />
+                    ) : (
+                      <CopyIcon className="size-5" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="teritary"
+                    className="size-12"
+                    onClick={handleReset}
+                    disabled={resetCode.isPending}
+                  >
+                    {copied ? (
+                      <CheckIcon className="size-5" />
+                    ) : (
+                      <RefreshCcw className="size-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

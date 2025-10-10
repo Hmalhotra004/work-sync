@@ -2,9 +2,11 @@ import { db } from "@/db";
 import { member, workspace } from "@/db/schema";
 import cloudinary from "@/lib/cloudinary";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
+import { generateInviteCode } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
+import z from "zod";
 
 import {
   createWorkspaceSchema,
@@ -19,6 +21,7 @@ export const workspaceRouter = createTRPCRouter({
         id: workspace.id,
         name: workspace.name,
         image: workspace.image,
+        inviteCode: workspace.inviteCode,
         userId: workspace.userId,
         role: member.role,
         createdAt: workspace.createdAt,
@@ -39,6 +42,7 @@ export const workspaceRouter = createTRPCRouter({
         id: workspace.id,
         name: workspace.name,
         image: workspace.image,
+        inviteCode: workspace.inviteCode,
         userId: workspace.userId,
         role: member.role,
         createdAt: workspace.createdAt,
@@ -219,5 +223,55 @@ export const workspaceRouter = createTRPCRouter({
       await db.delete(workspace).where(eq(workspace.id, workspaceToDelete.id));
 
       return { success: true };
+    }),
+
+  resetInviteCode: protectedProcedure
+    .input(z.object({ id: z.string(), join: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, join } = input;
+
+      const [workspaceToReset] = await db
+        .select({
+          id: workspace.id,
+          inviteCode: workspace.inviteCode,
+          role: member.role,
+        })
+        .from(workspace)
+        .innerJoin(member, eq(member.workspaceId, workspace.id))
+        .where(
+          and(eq(workspace.id, id), eq(workspace.userId, ctx.auth.user.id))
+        );
+
+      if (!workspaceToReset) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
+
+      if (join) {
+        const [updatedWorkspace] = await db
+          .update(workspace)
+          .set({ inviteCode: generateInviteCode(6) })
+          .where(eq(workspace.id, workspaceToReset.id))
+          .returning();
+
+        return updatedWorkspace;
+      } else {
+        if (workspaceToReset.role !== "admin") {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Only admins can reset code",
+          });
+        }
+
+        const [updatedWorkspace] = await db
+          .update(workspace)
+          .set({ inviteCode: generateInviteCode(6) })
+          .where(eq(workspace.id, workspaceToReset.id))
+          .returning();
+
+        return updatedWorkspace;
+      }
     }),
 });
