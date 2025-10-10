@@ -122,12 +122,14 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
 
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
+    form.setValue("image", URL.createObjectURL(selected));
   }
 
   function clearImg() {
     setFile(null);
     setPreview(null);
-    form.resetField("image");
+    form.setValue("image", null);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   const onSubmit = async (values: z.infer<typeof createWorkspaceSchema>) => {
@@ -143,18 +145,17 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         await updateWorkspace.mutateAsync({
           id: initialValues?.id,
           name: values.name,
-          image: imageUrl,
+          image: imageUrl ?? undefined,
         });
       } else {
         await createWorkspace.mutateAsync({
           name: values.name,
-          image: imageUrl,
+          image: imageUrl ?? undefined,
         });
+        setFile(null);
+        setPreview(null);
+        form.reset();
       }
-
-      form.reset();
-      setFile(null);
-      setPreview(null);
     } catch (err) {
       console.error(err);
       toast.error("Failed to save workspace");
@@ -192,7 +193,7 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         <FormField
           name="image"
           control={form.control}
-          render={({ field }) => (
+          render={() => (
             <div className="flex flex-col gap-y-2">
               <div className="flex items-center gap-x-5">
                 {preview ? (
@@ -212,44 +213,47 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                   </Avatar>
                 )}
 
-                <div>
-                  <p className="text-sm font-medium">Workspace Icon</p>
-                  <p className="text-sm text-muted-foreground">
-                    JPG, PNG, JPEG or SVG (max 10MB)
-                  </p>
-                  <input
-                    ref={inputRef}
-                    type="file"
-                    accept=".jpg, .jpeg, .png, .svg"
-                    className="hidden"
-                    disabled={isPending}
-                    onChange={handleImageSelect}
-                  />
-                  {field.value ? (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="xs"
-                      className="mt-2 w-fit"
-                      onClick={clearImg}
+                <FormControl>
+                  <div>
+                    <p className="text-sm font-medium">Workspace Icon</p>
+                    <p className="text-sm text-muted-foreground">
+                      JPG, PNG, JPEG or SVG (max 5MB)
+                    </p>
+                    <input
+                      ref={inputRef}
+                      type="file"
+                      accept=".jpg, .jpeg, .png, .svg"
+                      className="hidden"
                       disabled={isPending}
-                    >
-                      Remove Image
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="teritary"
-                      size="xs"
-                      className="mt-2 w-fit"
-                      onClick={() => inputRef.current?.click()}
-                      disabled={isPending}
-                    >
-                      Upload Image
-                    </Button>
-                  )}
-                </div>
+                      onChange={handleImageSelect}
+                    />
+                    {preview ? (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="xs"
+                        className="mt-2 w-fit"
+                        onClick={clearImg}
+                        disabled={isPending}
+                      >
+                        Remove Image
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="teritary"
+                        size="xs"
+                        className="mt-2 w-fit"
+                        onClick={() => inputRef.current?.click()}
+                        disabled={isPending}
+                      >
+                        Upload Image
+                      </Button>
+                    )}
+                  </div>
+                </FormControl>
               </div>
+              <FormMessage />
             </div>
           )}
         />

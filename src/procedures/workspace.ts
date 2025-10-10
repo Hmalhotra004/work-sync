@@ -67,7 +67,7 @@ export const workspaceRouter = createTRPCRouter({
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
           code: "UNSUPPORTED_MEDIA_TYPE",
-          message: "Invalid Url",
+          message: "Invalid Image",
         });
       }
 
@@ -109,7 +109,7 @@ export const workspaceRouter = createTRPCRouter({
         .update(workspace)
         .set({
           name,
-          image,
+          image: image ?? null,
         })
         .where(eq(workspace.id, id))
         .returning();

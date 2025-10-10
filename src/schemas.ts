@@ -21,7 +21,7 @@ export const createWorkspaceSchema = createInsertSchema(workspace)
   })
   .extend({
     name: z.string().min(1, { error: "Workspace name is required" }),
-    image: z.url().optional(),
+    image: z.url().optional().nullable(),
   });
 
 export const updateWorkspaceSchema = createUpdateSchema(workspace)
