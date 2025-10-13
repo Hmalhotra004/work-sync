@@ -1,42 +1,18 @@
 import { db } from "@/db";
 import { member, user, workspace } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
-import { deleteCloudinaryImage, generateInviteCode } from "@/lib/utils";
+import { generateInviteCode } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import z from "zod";
 
+import { deleteCloudinaryImage, verifyAdminRole } from "@/lib/serverHelpers";
 import {
   createWorkspaceSchema,
   IdSchema,
   updateWorkspaceSchema,
 } from "@/schemas";
-
-const verifyAdminRole = async (
-  workspaceId: string,
-  userId: string
-): Promise<void> => {
-  const [memberRecord] = await db
-    .select({ role: member.role })
-    .from(member)
-    .where(and(eq(member.workspaceId, workspaceId), eq(member.userId, userId)))
-    .limit(1);
-
-  if (!memberRecord) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Not a part of workspace",
-    });
-  }
-
-  if (memberRecord.role !== "admin") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Only admins can perform this action",
-    });
-  }
-};
 
 export const workspaceRouter = createTRPCRouter({
   getMany: protectedProcedure.query(async ({ ctx }) => {
