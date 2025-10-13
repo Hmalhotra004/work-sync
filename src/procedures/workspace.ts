@@ -1,11 +1,10 @@
 import { db } from "@/db";
-import { member, workspace } from "@/db/schema";
-import cloudinary from "@/lib/cloudinary";
+import { member, user, workspace } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
-import { generateInviteCode } from "@/lib/utils";
+import { deleteCloudinaryImage, generateInviteCode } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import z from "zod";
 
 import {
@@ -13,6 +12,31 @@ import {
   IdSchema,
   updateWorkspaceSchema,
 } from "@/schemas";
+
+const verifyAdminRole = async (
+  workspaceId: string,
+  userId: string
+): Promise<void> => {
+  const [memberRecord] = await db
+    .select({ role: member.role })
+    .from(member)
+    .where(and(eq(member.workspaceId, workspaceId), eq(member.userId, userId)))
+    .limit(1);
+
+  if (!memberRecord) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Not a part of workspace",
+    });
+  }
+
+  if (memberRecord.role !== "admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only admins can perform this action",
+    });
+  }
+};
 
 export const workspaceRouter = createTRPCRouter({
   getMany: protectedProcedure.query(async ({ ctx }) => {
@@ -29,7 +53,8 @@ export const workspaceRouter = createTRPCRouter({
       })
       .from(workspace)
       .innerJoin(member, eq(member.workspaceId, workspace.id))
-      .where(eq(member.userId, ctx.auth.user.id));
+      .where(eq(member.userId, ctx.auth.user.id))
+      .orderBy(workspace.updatedAt);
 
     return userWorkspaces;
   }),
@@ -50,7 +75,8 @@ export const workspaceRouter = createTRPCRouter({
       })
       .from(workspace)
       .innerJoin(member, eq(member.workspaceId, workspace.id))
-      .where(and(eq(workspace.id, id), eq(member.userId, ctx.auth.user.id)));
+      .where(and(eq(workspace.id, id), eq(member.userId, ctx.auth.user.id)))
+      .limit(1);
 
     if (!userWorkspace) {
       throw new TRPCError({
@@ -62,6 +88,76 @@ export const workspaceRouter = createTRPCRouter({
     return userWorkspace;
   }),
 
+  getWorkspaceMembers: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        limit: z.number().min(1).max(100).default(50).optional(),
+        offset: z.number().min(0).default(0).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { workspaceId, limit = 50, offset = 0 } = input;
+
+      // Verify user is a member of the workspace
+      const [membership] = await db
+        .select({ role: member.role })
+        .from(member)
+        .where(
+          and(
+            eq(member.workspaceId, workspaceId),
+            eq(member.userId, ctx.auth.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!membership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not a member of this workspace",
+        });
+      }
+
+      // Get total count for pagination
+      const [{ count }] = await db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(member)
+        .where(eq(member.workspaceId, workspaceId));
+
+      // Fetch members with user details
+      const members = await db
+        .select({
+          memberId: member.id,
+          userId: member.userId,
+          workspaceId: member.workspaceId,
+          role: member.role,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+          },
+        })
+        .from(member)
+        .innerJoin(user, eq(user.id, member.userId))
+        .where(eq(member.workspaceId, workspaceId))
+        .orderBy(member.createdAt)
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        members,
+        pagination: {
+          total: count,
+          limit,
+          offset,
+          hasMore: offset + limit < count,
+        },
+      };
+    }),
+
   create: protectedProcedure
     .input(createWorkspaceSchema)
     .mutation(async ({ ctx, input }) => {
@@ -70,22 +166,27 @@ export const workspaceRouter = createTRPCRouter({
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
           code: "UNSUPPORTED_MEDIA_TYPE",
-          message: "Invalid Image",
+          message: "Invalid image URL",
         });
       }
 
-      const [createdWorkspace] = await db
-        .insert(workspace)
-        .values({ name, image, userId: ctx.auth.user.id })
-        .returning();
+      // Use transaction for atomicity
+      const result = await db.transaction(async (tx) => {
+        const [createdWorkspace] = await tx
+          .insert(workspace)
+          .values({ name, image, userId: ctx.auth.user.id })
+          .returning();
 
-      await db.insert(member).values({
-        role: "admin",
-        userId: ctx.auth.user.id,
-        workspaceId: createdWorkspace.id,
+        await tx.insert(member).values({
+          role: "admin",
+          userId: ctx.auth.user.id,
+          workspaceId: createdWorkspace.id,
+        });
+
+        return createdWorkspace;
       });
 
-      return createdWorkspace;
+      return result;
     }),
 
   update: protectedProcedure
@@ -93,18 +194,13 @@ export const workspaceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, image, name } = input;
 
-      const [memberRecord] = await db
-        .select()
-        .from(member)
-        .where(
-          and(eq(member.workspaceId, id), eq(member.userId, ctx.auth.user.id))
-        )
-        .limit(1);
+      // Verify admin role
+      await verifyAdminRole(id, ctx.auth.user.id);
 
-      if (!memberRecord || memberRecord.role !== "admin") {
+      if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only admins can update this workspace.",
+          code: "UNSUPPORTED_MEDIA_TYPE",
+          message: "Invalid image URL",
         });
       }
 
@@ -120,7 +216,7 @@ export const workspaceRouter = createTRPCRouter({
       if (!updatedWorkspace) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Workspace not found.",
+          message: "Workspace not found",
         });
       }
 
@@ -130,49 +226,47 @@ export const workspaceRouter = createTRPCRouter({
   deleteWorkspaceImage: protectedProcedure
     .input(IdSchema)
     .mutation(async ({ ctx, input }) => {
-      const [workspaceToDelete] = await db
+      const [workspaceToUpdate] = await db
         .select({ image: workspace.image, role: member.role })
         .from(workspace)
         .innerJoin(member, eq(member.workspaceId, workspace.id))
         .where(
-          and(
-            eq(workspace.id, input.id),
-            eq(workspace.userId, ctx.auth.user.id)
-          )
-        );
+          and(eq(workspace.id, input.id), eq(member.userId, ctx.auth.user.id))
+        )
+        .limit(1);
 
-      if (!workspaceToDelete)
+      if (!workspaceToUpdate) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Workspace not found",
         });
+      }
 
-      if (workspaceToDelete.role !== "admin")
+      if (workspaceToUpdate.role !== "admin") {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Only admin can update a workspace",
+          code: "FORBIDDEN",
+          message: "Only admins can update a workspace",
         });
+      }
 
-      //  Delete image from Cloudinary if exists
-      if (workspaceToDelete.image) {
+      // Delete image from Cloudinary if exists
+      if (workspaceToUpdate.image) {
         try {
-          // Extract Cloudinary public_id from URL
-          const match = workspaceToDelete.image.match(
-            /\/upload\/v\d+\/(.+)\.[a-zA-Z0-9]+$/
-          );
-          const publicId = match ? match[1] : null;
-
-          if (publicId) {
-            await cloudinary.uploader.destroy(publicId);
-          }
+          await deleteCloudinaryImage(workspaceToUpdate.image);
         } catch (err) {
           console.error("Failed to delete image from Cloudinary:", err);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Something went wrong",
+            message: "Failed to delete image",
           });
         }
       }
+
+      // Update database to remove image reference
+      await db
+        .update(workspace)
+        .set({ image: null })
+        .where(eq(workspace.id, input.id));
 
       return { success: true };
     }),
@@ -185,36 +279,28 @@ export const workspaceRouter = createTRPCRouter({
         .from(workspace)
         .innerJoin(member, eq(member.workspaceId, workspace.id))
         .where(
-          and(
-            eq(workspace.id, input.id),
-            eq(workspace.userId, ctx.auth.user.id)
-          )
-        );
+          and(eq(workspace.id, input.id), eq(member.userId, ctx.auth.user.id))
+        )
+        .limit(1);
 
-      if (!workspaceToDelete)
+      if (!workspaceToDelete) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Workspace not found",
         });
+      }
 
-      if (workspaceToDelete.role !== "admin")
+      if (workspaceToDelete.role !== "admin") {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Only admin can delete a workspace",
+          code: "FORBIDDEN",
+          message: "Only admins can delete a workspace",
         });
+      }
 
-      //  Delete image from Cloudinary if exists
+      // Delete image from Cloudinary if exists (before deleting workspace)
       if (workspaceToDelete.image) {
         try {
-          // Extract Cloudinary public_id from URL
-          const match = workspaceToDelete.image.match(
-            /\/upload\/v\d+\/(.+)\.[a-zA-Z0-9]+$/
-          );
-          const publicId = match ? match[1] : null;
-
-          if (publicId) {
-            await cloudinary.uploader.destroy(publicId);
-          }
+          await deleteCloudinaryImage(workspaceToDelete.image);
         } catch (err) {
           console.error("Failed to delete image from Cloudinary:", err);
         }
@@ -226,7 +312,12 @@ export const workspaceRouter = createTRPCRouter({
     }),
 
   join: protectedProcedure
-    .input(z.object({ id: z.string(), code: z.string() }))
+    .input(
+      z.object({
+        id: z.string().min(1),
+        code: z.string().min(6).max(6),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const { code, id } = input;
 
@@ -236,7 +327,8 @@ export const workspaceRouter = createTRPCRouter({
           inviteCode: workspace.inviteCode,
         })
         .from(workspace)
-        .where(eq(workspace.id, id));
+        .where(eq(workspace.id, id))
+        .limit(1);
 
       if (!workspaceToJoin) {
         throw new TRPCError({
@@ -248,20 +340,36 @@ export const workspaceRouter = createTRPCRouter({
       if (workspaceToJoin.inviteCode !== code) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Invalid Invite Link",
+          message: "Invalid invite code",
         });
       }
 
-      await db
-        .insert(member)
-        .values({
-          userId: ctx.auth.user.id,
-          workspaceId: workspaceToJoin.id,
-          role: "member",
-        })
-        .onConflictDoNothing();
+      // Check if user is already a member
+      const [existingMember] = await db
+        .select()
+        .from(member)
+        .where(
+          and(
+            eq(member.userId, ctx.auth.user.id),
+            eq(member.workspaceId, workspaceToJoin.id)
+          )
+        )
+        .limit(1);
 
-      return { success: true };
+      if (existingMember) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Already a member of this workspace",
+        });
+      }
+
+      await db.insert(member).values({
+        userId: ctx.auth.user.id,
+        workspaceId: workspaceToJoin.id,
+        role: "member",
+      });
+
+      return { success: true, workspaceId: workspaceToJoin.id };
     }),
 
   getWorkspaceInfo: protectedProcedure
@@ -272,7 +380,8 @@ export const workspaceRouter = createTRPCRouter({
       const [workspaceInfo] = await db
         .select({ name: workspace.name })
         .from(workspace)
-        .where(eq(workspace.id, id));
+        .where(eq(workspace.id, id))
+        .limit(1);
 
       if (!workspaceInfo) {
         throw new TRPCError({
@@ -289,37 +398,21 @@ export const workspaceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id } = input;
 
-      const [workspaceToReset] = await db
-        .select({
-          id: workspace.id,
-          inviteCode: workspace.inviteCode,
-          role: member.role,
-        })
-        .from(workspace)
-        .innerJoin(member, eq(member.workspaceId, workspace.id))
-        .where(
-          and(eq(workspace.id, id), eq(workspace.userId, ctx.auth.user.id))
-        );
+      // Verify admin role
+      await verifyAdminRole(id, ctx.auth.user.id);
 
-      if (!workspaceToReset) {
+      const [updatedWorkspace] = await db
+        .update(workspace)
+        .set({ inviteCode: generateInviteCode(6) })
+        .where(eq(workspace.id, id))
+        .returning();
+
+      if (!updatedWorkspace) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Workspace not found",
         });
       }
-
-      if (workspaceToReset.role !== "admin") {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Only admins can reset code",
-        });
-      }
-
-      const [updatedWorkspace] = await db
-        .update(workspace)
-        .set({ inviteCode: generateInviteCode(6) })
-        .where(eq(workspace.id, workspaceToReset.id))
-        .returning();
 
       return updatedWorkspace;
     }),
