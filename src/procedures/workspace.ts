@@ -468,4 +468,54 @@ export const workspaceRouter = createTRPCRouter({
 
       return updatedMember;
     }),
+
+  removeMember: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        memberId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { workspaceId, memberId } = input;
+
+      // Verify requester is admin
+      await verifyAdminRole(workspaceId, ctx.auth.user.id);
+
+      // Prevent removing the workspace owner
+      const [workspaceOwner] = await db
+        .select({ userId: workspace.userId })
+        .from(workspace)
+        .where(eq(workspace.id, workspaceId))
+        .limit(1);
+
+      const [memberToRemove] = await db
+        .select({ userId: member.userId })
+        .from(member)
+        .where(eq(member.id, memberId))
+        .limit(1);
+
+      if (memberToRemove?.userId === workspaceOwner?.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot remove workspace owner",
+        });
+      }
+
+      const result = await db
+        .delete(member)
+        .where(
+          and(eq(member.id, memberId), eq(member.workspaceId, workspaceId))
+        )
+        .returning();
+
+      if (!result.length) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Member not found",
+        });
+      }
+
+      return { success: true };
+    }),
 });
