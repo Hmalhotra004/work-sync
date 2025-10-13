@@ -11,10 +11,17 @@ export const IdSchema = z.object({
   id: z.string().min(1, { error: "ID is required" }),
 });
 
+export const memberRoleSchema = z.enum([
+  "Owner",
+  "Admin",
+  "Moderator",
+  "Member",
+]);
+
 export const createWorkspaceSchema = createInsertSchema(workspace)
   .omit({
     id: true,
-    userId: true,
+    ownerId: true,
     createdAt: true,
     updatedAt: true,
     inviteCode: true,
@@ -26,7 +33,7 @@ export const createWorkspaceSchema = createInsertSchema(workspace)
 
 export const updateWorkspaceSchema = createUpdateSchema(workspace)
   .omit({
-    userId: true,
+    ownerId: true,
     createdAt: true,
     updatedAt: true,
     inviteCode: true,

@@ -1,11 +1,10 @@
 import { db } from "@/db";
 import { member, user, workspace } from "@/db/schema";
+import { verifyRole } from "@/lib/serverHelpers";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import z from "zod";
-
-import { verifyAdminRole } from "@/lib/serverHelpers";
 
 export const memberRouter = createTRPCRouter({
   getWorkspaceMembers: protectedProcedure
@@ -47,14 +46,14 @@ export const memberRouter = createTRPCRouter({
       // Fetch members with user details
       const members = await db
         .select({
-          userId: member.userId,
           memberId: member.id,
+          userId: member.userId,
           workspaceId: member.workspaceId,
           name: user.name,
           email: user.email,
           image: user.image,
           role: member.role,
-          isAdmin: sql<boolean>`${workspace.userId} = ${member.userId}`,
+          isOwner: sql<boolean>`${workspace.ownerId} = ${member.userId}`,
           createdAt: member.createdAt,
           updatedAt: member.updatedAt,
         })
@@ -77,57 +76,57 @@ export const memberRouter = createTRPCRouter({
       };
     }),
 
-  updateMemberRole: protectedProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-        memberId: z.string(),
-        role: z.enum(["admin", "mod", "member"]),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { workspaceId, memberId, role } = input;
+  // updateMemberRole: protectedProcedure
+  //   .input(
+  //     z.object({
+  //       workspaceId: z.string(),
+  //       memberId: z.string(),
+  //       role: z.enum(["admin", "mod", "member"]),
+  //     })
+  //   )
+  //   .mutation(async ({ ctx, input }) => {
+  //     const { workspaceId, memberId, role } = input;
 
-      // Verify requester is admin
-      await verifyAdminRole(workspaceId, ctx.auth.user.id);
+  //     // Verify requester is admin
+  //     await verifyAdminRole(workspaceId, ctx.auth.user.id);
 
-      // Prevent demoting the workspace owner
-      const [workspaceOwner] = await db
-        .select({ userId: workspace.userId })
-        .from(workspace)
-        .where(eq(workspace.id, workspaceId))
-        .limit(1);
+  //     // Prevent demoting the workspace owner
+  //     const [workspaceOwner] = await db
+  //       .select({ userId: workspace.userId })
+  //       .from(workspace)
+  //       .where(eq(workspace.id, workspaceId))
+  //       .limit(1);
 
-      const [memberToUpdate] = await db
-        .select({ userId: member.userId })
-        .from(member)
-        .where(eq(member.id, memberId))
-        .limit(1);
+  //     const [memberToUpdate] = await db
+  //       .select({ userId: member.userId })
+  //       .from(member)
+  //       .where(eq(member.id, memberId))
+  //       .limit(1);
 
-      if (memberToUpdate?.userId === workspaceOwner?.userId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot change workspace owner role",
-        });
-      }
+  //     if (memberToUpdate?.userId === workspaceOwner?.userId) {
+  //       throw new TRPCError({
+  //         code: "FORBIDDEN",
+  //         message: "Cannot change workspace owner role",
+  //       });
+  //     }
 
-      const [updatedMember] = await db
-        .update(member)
-        .set({ role })
-        .where(
-          and(eq(member.id, memberId), eq(member.workspaceId, workspaceId))
-        )
-        .returning();
+  //     const [updatedMember] = await db
+  //       .update(member)
+  //       .set({ role })
+  //       .where(
+  //         and(eq(member.id, memberId), eq(member.workspaceId, workspaceId))
+  //       )
+  //       .returning();
 
-      if (!updatedMember) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Member not found",
-        });
-      }
+  //     if (!updatedMember) {
+  //       throw new TRPCError({
+  //         code: "NOT_FOUND",
+  //         message: "Member not found",
+  //       });
+  //     }
 
-      return updatedMember;
-    }),
+  //     return updatedMember;
+  //   }),
 
   removeMember: protectedProcedure
     .input(
@@ -140,11 +139,11 @@ export const memberRouter = createTRPCRouter({
       const { workspaceId, memberId } = input;
 
       // Verify requester is admin
-      await verifyAdminRole(workspaceId, ctx.auth.user.id);
+      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
 
       // Prevent removing the workspace owner
       const [workspaceOwner] = await db
-        .select({ userId: workspace.userId })
+        .select({ ownerId: workspace.ownerId })
         .from(workspace)
         .where(eq(workspace.id, workspaceId))
         .limit(1);
@@ -155,10 +154,17 @@ export const memberRouter = createTRPCRouter({
         .where(eq(member.id, memberId))
         .limit(1);
 
-      if (memberToRemove?.userId === workspaceOwner?.userId) {
+      if (memberToRemove?.userId === workspaceOwner?.ownerId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Cannot remove workspace owner",
+        });
+      }
+
+      if (memberToRemove?.userId === ctx.auth.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot remove yourself",
         });
       }
 
