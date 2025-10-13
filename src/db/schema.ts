@@ -93,7 +93,7 @@ export const workspace = pgTable(
     inviteCode: text("invite_code")
       .notNull()
       .$defaultFn(() => generateInviteCode(6)),
-    userId: text("user_id")
+    ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -103,12 +103,17 @@ export const workspace = pgTable(
       .notNull(),
   },
   (table) => ({
-    userIdIdx: index("workspace_user_id_idx").on(table.userId),
+    userIdIdx: index("workspace_user_id_idx").on(table.ownerId),
     inviteCodeIdx: index("workspace_invite_code_idx").on(table.inviteCode),
   })
 );
 
-export const memberRole = pgEnum("memberRole", ["admin", "mod", "member"]);
+export const memberRole = pgEnum("memberRole", [
+  "Owner",
+  "Admin",
+  "Moderator",
+  "Member",
+]);
 
 export const member = pgTable(
   "member",
@@ -122,7 +127,7 @@ export const member = pgTable(
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
-    role: memberRole("role").notNull().default("member"),
+    role: memberRole("role").notNull().default("Member"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
