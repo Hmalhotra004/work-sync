@@ -54,11 +54,13 @@ export const memberRouter = createTRPCRouter({
           email: user.email,
           image: user.image,
           role: member.role,
+          isAdmin: sql<boolean>`${workspace.userId} = ${member.userId}`,
           createdAt: member.createdAt,
           updatedAt: member.updatedAt,
         })
         .from(member)
         .innerJoin(user, eq(user.id, member.userId))
+        .innerJoin(workspace, eq(workspace.id, member.workspaceId))
         .where(eq(member.workspaceId, workspaceId))
         .orderBy(member.createdAt)
         .limit(limit)
@@ -80,7 +82,7 @@ export const memberRouter = createTRPCRouter({
       z.object({
         workspaceId: z.string(),
         memberId: z.string(),
-        role: z.enum(["mod", "member"]),
+        role: z.enum(["admin", "mod", "member"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
