@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 
 import {
   boolean,
+  index,
   pgEnum,
   pgTable,
   text,
@@ -81,24 +82,31 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
-export const workspace = pgTable("workspace", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  name: text("name").notNull(),
-  image: text("image"),
-  inviteCode: text("invite_code")
-    .notNull()
-    .$defaultFn(() => generateInviteCode(6)),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const workspace = pgTable(
+  "workspace",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    name: text("name").notNull(),
+    image: text("image"),
+    inviteCode: text("invite_code")
+      .notNull()
+      .$defaultFn(() => generateInviteCode(6)),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("workspace_user_id_idx").on(table.userId),
+    inviteCodeIdx: index("workspace_invite_code_idx").on(table.inviteCode),
+  })
+);
 
 export const memberRole = pgEnum("memberRole", ["admin", "mod", "member"]);
 
@@ -123,5 +131,7 @@ export const member = pgTable(
   },
   (table) => ({
     userWorkspaceUnique: unique().on(table.userId, table.workspaceId),
+    userIdIdx: index("member_user_id_idx").on(table.userId),
+    workspaceIdIdx: index("member_workspace_id_idx").on(table.workspaceId),
   })
 );
