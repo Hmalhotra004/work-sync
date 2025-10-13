@@ -47,18 +47,15 @@ export const memberRouter = createTRPCRouter({
       // Fetch members with user details
       const members = await db
         .select({
-          memberId: member.id,
           userId: member.userId,
+          memberId: member.id,
           workspaceId: member.workspaceId,
+          name: user.name,
+          email: user.email,
+          image: user.image,
           role: member.role,
           createdAt: member.createdAt,
           updatedAt: member.updatedAt,
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            image: user.image,
-          },
         })
         .from(member)
         .innerJoin(user, eq(user.id, member.userId))
