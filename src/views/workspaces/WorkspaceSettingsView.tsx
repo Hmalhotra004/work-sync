@@ -53,11 +53,12 @@ const WorkspaceSettingsView = ({ id }: Props) => {
           trpc.workspace.getOne.queryOptions({ id: data.id })
         );
         router.refresh();
-        setReset(false);
         toast.success("Invite Code reset Success");
       },
 
       onError: (error) => toast.error(error.message),
+
+      onSettled: () => setReset(false),
     })
   );
 
