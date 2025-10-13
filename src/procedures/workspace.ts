@@ -225,10 +225,69 @@ export const workspaceRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  resetInviteCode: protectedProcedure
-    .input(z.object({ id: z.string(), join: z.boolean() }))
+  join: protectedProcedure
+    .input(z.object({ id: z.string(), code: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const { id, join } = input;
+      const { code, id } = input;
+
+      const [workspaceToJoin] = await db
+        .select({
+          id: workspace.id,
+          inviteCode: workspace.inviteCode,
+        })
+        .from(workspace)
+        .where(eq(workspace.id, id));
+
+      if (!workspaceToJoin) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
+
+      if (workspaceToJoin.inviteCode !== code) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid Invite Link",
+        });
+      }
+
+      await db
+        .insert(member)
+        .values({
+          userId: ctx.auth.user.id,
+          workspaceId: workspaceToJoin.id,
+          role: "member",
+        })
+        .onConflictDoNothing();
+
+      return { success: true };
+    }),
+
+  getWorkspaceInfo: protectedProcedure
+    .input(IdSchema)
+    .query(async ({ input }) => {
+      const { id } = input;
+
+      const [workspaceInfo] = await db
+        .select({ name: workspace.name })
+        .from(workspace)
+        .where(eq(workspace.id, id));
+
+      if (!workspaceInfo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
+
+      return workspaceInfo;
+    }),
+
+  resetInviteCode: protectedProcedure
+    .input(IdSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { id } = input;
 
       const [workspaceToReset] = await db
         .select({
@@ -249,29 +308,19 @@ export const workspaceRouter = createTRPCRouter({
         });
       }
 
-      if (join) {
-        const [updatedWorkspace] = await db
-          .update(workspace)
-          .set({ inviteCode: generateInviteCode(6) })
-          .where(eq(workspace.id, workspaceToReset.id))
-          .returning();
-
-        return updatedWorkspace;
-      } else {
-        if (workspaceToReset.role !== "admin") {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Only admins can reset code",
-          });
-        }
-
-        const [updatedWorkspace] = await db
-          .update(workspace)
-          .set({ inviteCode: generateInviteCode(6) })
-          .where(eq(workspace.id, workspaceToReset.id))
-          .returning();
-
-        return updatedWorkspace;
+      if (workspaceToReset.role !== "admin") {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Only admins can reset code",
+        });
       }
+
+      const [updatedWorkspace] = await db
+        .update(workspace)
+        .set({ inviteCode: generateInviteCode(6) })
+        .where(eq(workspace.id, workspaceToReset.id))
+        .returning();
+
+      return updatedWorkspace;
     }),
 });

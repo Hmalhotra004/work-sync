@@ -25,6 +25,7 @@ interface Props {
 
 const WorkspaceSettingsView = ({ id }: Props) => {
   const [copied, setCopied] = useState(false);
+  const [reset, setReset] = useState(false);
 
   const trpc = useTRPC();
   const router = useRouter();
@@ -51,6 +52,8 @@ const WorkspaceSettingsView = ({ id }: Props) => {
         await queryClient.invalidateQueries(
           trpc.workspace.getOne.queryOptions({ id: data.id })
         );
+        router.refresh();
+        setReset(false);
         toast.success("Invite Code reset Success");
       },
 
@@ -82,8 +85,9 @@ const WorkspaceSettingsView = ({ id }: Props) => {
     const ok = await confirmReset();
 
     if (!ok) return;
+    setReset(true);
 
-    await resetCode.mutateAsync({ id: data.id, join: false });
+    await resetCode.mutateAsync({ id: data.id });
   }
 
   async function handleCopyInviteLink() {
@@ -154,8 +158,8 @@ const WorkspaceSettingsView = ({ id }: Props) => {
                     onClick={handleReset}
                     disabled={resetCode.isPending}
                   >
-                    {copied ? (
-                      <CheckIcon className="size-5" />
+                    {reset ? (
+                      <Loader className="size-5" />
                     ) : (
                       <RefreshCcw className="size-5" />
                     )}
