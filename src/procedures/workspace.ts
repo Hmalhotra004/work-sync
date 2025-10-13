@@ -416,4 +416,56 @@ export const workspaceRouter = createTRPCRouter({
 
       return updatedWorkspace;
     }),
+
+  updateMemberRole: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        memberId: z.string(),
+        role: z.enum(["mod", "member"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { workspaceId, memberId, role } = input;
+
+      // Verify requester is admin
+      await verifyAdminRole(workspaceId, ctx.auth.user.id);
+
+      // Prevent demoting the workspace owner
+      const [workspaceOwner] = await db
+        .select({ userId: workspace.userId })
+        .from(workspace)
+        .where(eq(workspace.id, workspaceId))
+        .limit(1);
+
+      const [memberToUpdate] = await db
+        .select({ userId: member.userId })
+        .from(member)
+        .where(eq(member.id, memberId))
+        .limit(1);
+
+      if (memberToUpdate?.userId === workspaceOwner?.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot change workspace owner role",
+        });
+      }
+
+      const [updatedMember] = await db
+        .update(member)
+        .set({ role })
+        .where(
+          and(eq(member.id, memberId), eq(member.workspaceId, workspaceId))
+        )
+        .returning();
+
+      if (!updatedMember) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Member not found",
+        });
+      }
+
+      return updatedMember;
+    }),
 });
