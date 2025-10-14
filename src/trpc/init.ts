@@ -1,7 +1,11 @@
+import { db } from "@/db";
+import { member, workspace } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { cache } from "react";
+import z from "zod";
 export const createTRPCContext = cache(async () => {
   /**
    * @see: https://trpc.io/docs/server/context
@@ -33,3 +37,45 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 
   return next({ ctx: { ...ctx, auth: session } });
 });
+
+export const projectProcedure = protectedProcedure
+  .input(
+    z.object({
+      workspaceId: z.string().min(1, { error: "WorkspaceId is required" }),
+    })
+  )
+  .use(async ({ ctx, next, input }) => {
+    const { workspaceId } = input;
+
+    const [existingWorkspace] = await db
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, workspaceId));
+
+    if (!existingWorkspace) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      });
+    }
+
+    const [memberRecord] = await db
+      .select({ role: member.role })
+      .from(member)
+      .where(
+        and(
+          eq(member.workspaceId, workspaceId),
+          eq(member.userId, ctx.auth.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!memberRecord) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Not a member of this workspace",
+      });
+    }
+
+    return next({ ctx: { ...ctx, role: memberRecord.role } });
+  });

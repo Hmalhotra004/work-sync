@@ -5,6 +5,7 @@ import Link from "next/link";
 import DottedSeparator from "./DottedSeparator";
 import Navigation from "./Navigation";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
+import Projects from "./project/Projects";
 
 const DashboardSidebar = () => {
   return (
@@ -27,6 +28,8 @@ const DashboardSidebar = () => {
       <Navigation />
 
       <DottedSeparator className="my-4" />
+
+      <Projects />
     </aside>
   );
 };

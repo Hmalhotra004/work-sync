@@ -3,10 +3,27 @@ import { project } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
 import { verifyRole } from "@/lib/serverHelpers";
 import { createProjectSchema } from "@/schemas";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 
+import {
+  createTRPCRouter,
+  projectProcedure,
+  protectedProcedure,
+} from "@/trpc/init";
+import { eq } from "drizzle-orm";
+
 export const projectRouter = createTRPCRouter({
+  getMany: projectProcedure.query(async ({ input }) => {
+    const { workspaceId } = input;
+
+    const projects = await db
+      .select()
+      .from(project)
+      .where(eq(project.workspaceId, workspaceId));
+
+    return projects;
+  }),
+
   create: protectedProcedure
     .input(createProjectSchema)
     .mutation(async ({ ctx, input }) => {
