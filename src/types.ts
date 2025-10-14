@@ -9,6 +9,8 @@ import { AppRouter } from "./trpc/routers/_app";
 export type WorkspaceType =
   inferRouterOutputs<AppRouter>["workspace"]["getOne"];
 
+export type ProjectType = inferRouterOutputs<AppRouter>["project"]["getOne"];
+
 export type MemberRoleType = z.infer<typeof memberRoleSchema>;
 
 export type IconType =
@@ -16,10 +18,6 @@ export type IconType =
   | ForwardRefExoticComponent<
       Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
     >;
-
-// export type HrefType =
-//   | UrlObject
-//   | __next_route_internal_types__.RouteImpl<UrlObject>;
 
 export type RouteType = {
   label: string;
