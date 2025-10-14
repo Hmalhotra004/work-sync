@@ -309,13 +309,6 @@ export const workspaceRouter = createTRPCRouter({
         .where(eq(workspace.id, id))
         .returning();
 
-      if (!updatedWorkspace) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
-        });
-      }
-
       return updatedWorkspace;
     }),
 });

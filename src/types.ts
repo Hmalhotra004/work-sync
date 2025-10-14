@@ -2,7 +2,6 @@ import { inferRouterOutputs } from "@trpc/server";
 import { LucideProps } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { type IconType as ReactIconType } from "react-icons/lib";
-import { UrlObject } from "url";
 import z from "zod";
 import { memberRoleSchema } from "./schemas";
 import { AppRouter } from "./trpc/routers/_app";
@@ -18,9 +17,9 @@ export type IconType =
       Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
     >;
 
-export type HrefType =
-  | UrlObject
-  | __next_route_internal_types__.RouteImpl<UrlObject>;
+// export type HrefType =
+//   | UrlObject
+//   | __next_route_internal_types__.RouteImpl<UrlObject>;
 
 export type RouteType = {
   label: string;

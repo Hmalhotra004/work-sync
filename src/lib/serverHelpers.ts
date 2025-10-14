@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { member } from "@/db/schema";
+import { member, workspace } from "@/db/schema";
 import { MemberRoleType } from "@/types";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -26,6 +26,18 @@ export const verifyRole = async (
   userId: string,
   role: MemberRoleType
 ): Promise<void> => {
+  const [existingWorkspace] = await db
+    .select()
+    .from(workspace)
+    .where(eq(workspace.id, workspaceId));
+
+  if (!existingWorkspace) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Workspace not found",
+    });
+  }
+
   const [memberRecord] = await db
     .select({ role: member.role })
     .from(member)
@@ -52,6 +64,18 @@ export const verifyExactRole = async (
   userId: string,
   exactRole: MemberRoleType
 ): Promise<void> => {
+  const [existingWorkspace] = await db
+    .select()
+    .from(workspace)
+    .where(eq(workspace.id, workspaceId));
+
+  if (!existingWorkspace) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Workspace not found",
+    });
+  }
+
   const [memberRecord] = await db
     .select({ role: member.role })
     .from(member)
