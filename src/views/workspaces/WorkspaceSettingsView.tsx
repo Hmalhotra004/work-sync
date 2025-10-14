@@ -171,28 +171,30 @@ const WorkspaceSettingsView = ({ id }: Props) => {
           </CardContent>
         </Card>
 
-        <Card className="w-full border-none shadow-none bg-background-100">
-          <CardContent className="px-7">
-            <div className="flex max-md:flex-col justify-center">
-              <div className="flex flex-col">
-                <h3 className="font-bold">Danger Zone</h3>
-                <p className="text-sm text-muted-foreground">
-                  Deleting a workspace is irreversible and will remove all
-                  associated data
-                </p>
+        {data.role === "Owner" && (
+          <Card className="w-full border-none shadow-none bg-background-100">
+            <CardContent className="px-7">
+              <div className="flex max-md:flex-col justify-center">
+                <div className="flex flex-col">
+                  <h3 className="font-bold">Danger Zone</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Deleting a workspace is irreversible and will remove all
+                    associated data
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  type="button"
+                  className="max-md:mt-6 w-fit ml-auto"
+                  disabled={deleteWorkspace.isPending}
+                  onClick={handleDelete}
+                >
+                  {deleteWorkspace.isPending ? <Loader /> : "Delete"}
+                </Button>
               </div>
-              <Button
-                variant="destructive"
-                type="button"
-                className="max-md:mt-6 w-fit ml-auto"
-                disabled={deleteWorkspace.isPending}
-                onClick={handleDelete}
-              >
-                {deleteWorkspace.isPending ? <Loader /> : "Delete"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );

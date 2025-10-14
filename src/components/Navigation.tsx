@@ -10,6 +10,8 @@ const Navigation = () => {
   const pathname = usePathname();
   const workspaceId = useWorkspaceId();
 
+  // todo:hide settings for mod and member
+
   return (
     <ul className="flex flex-col">
       {routes.map((r, idx) => {

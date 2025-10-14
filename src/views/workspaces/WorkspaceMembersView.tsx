@@ -36,6 +36,8 @@ const WorkspaceMembersView = ({ workspaceId, userId }: Props) => {
 
   async function handleRemove(memberId: string) {}
 
+  // TODO:Member role managerment system
+
   return (
     <div className="w-full">
       <Card className="w-full border-none shadow-none">
