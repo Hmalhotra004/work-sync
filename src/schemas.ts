@@ -63,3 +63,8 @@ export const updateProjectSchema = createInsertSchema(project)
     name: z.string().min(1, { error: "Project name is required" }),
     image: z.url().optional().nullable(),
   });
+
+export const projectNWorkspaceIdSchema = z.object({
+  projectId: z.string().min(1, { error: "Project Id is required" }),
+  workspaceId: z.string().min(1, { error: "Project Id is required" }),
+});

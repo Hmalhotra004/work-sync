@@ -2,7 +2,7 @@ import { ErrorBoundaryWrapper } from "@/components/fallbacks/ErrorBoundaryWrappe
 import PageLoading from "@/components/fallbacks/PageLoading";
 import { auth } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/trpc/server";
-import ProjectIdView from "@/views/projects/ProjectIdView";
+import ProjectSettingsView from "@/views/projects/ProjectSettingsView";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -12,7 +12,7 @@ interface Props {
   params: Promise<{ workspaceId: string; projectId: string }>;
 }
 
-const ProjectIdPage = async ({ params }: Props) => {
+const Settings = async ({ params }: Props) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -29,14 +29,14 @@ const ProjectIdPage = async ({ params }: Props) => {
   const queryClient = getQueryClient();
 
   void queryClient.prefetchQuery(
-    trpc.project.getOne.queryOptions({ workspaceId, id: projectId })
+    trpc.project.getOne.queryOptions({ id: projectId, workspaceId })
   );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<PageLoading />}>
         <ErrorBoundaryWrapper>
-          <ProjectIdView
+          <ProjectSettingsView
             workspaceId={workspaceId}
             projectId={projectId}
           />
@@ -46,4 +46,4 @@ const ProjectIdPage = async ({ params }: Props) => {
   );
 };
 
-export default ProjectIdPage;
+export default Settings;

@@ -71,26 +71,27 @@ const ProjectForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     })
   );
 
-  // FIXME:make it project
-  const updateWorkspace = useMutation(
-    trpc.workspace.update.mutationOptions({
+  const updateProject = useMutation(
+    trpc.project.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(
-          trpc.workspace.getMany.queryOptions()
+          trpc.project.getMany.queryOptions({ workspaceId })
         );
         await queryClient.invalidateQueries(
-          trpc.workspace.getOne.queryOptions({ id: initialValues!.id! })
+          trpc.project.getOne.queryOptions({
+            id: initialValues!.id!,
+            workspaceId,
+          })
         );
-        toast.success("Workspace Updated");
+        toast.success("Project Updated");
         onSuccess?.();
       },
       onError: (error) => toast.error(error.message),
     })
   );
 
-  // FIXME:make it project
-  const deleteWorkspaceImage = useMutation(
-    trpc.workspace.deleteWorkspaceImage.mutationOptions()
+  const deleteProjectImage = useMutation(
+    trpc.project.deleteProjectImage.mutationOptions()
   );
 
   const getSignature = useMutation(
@@ -151,7 +152,10 @@ const ProjectForm = ({ onCancel, initialValues, onSuccess }: Props) => {
 
       if (file) {
         if (isEdit && initialValues.image) {
-          await deleteWorkspaceImage.mutateAsync({ id: initialValues.id });
+          await deleteProjectImage.mutateAsync({
+            projectId: initialValues.id,
+            workspaceId,
+          });
         }
 
         imageUrl = await uploadImageToCloudinary(file);
@@ -159,16 +163,20 @@ const ProjectForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         if (preview) {
           imageUrl = preview;
         } else {
-          await deleteWorkspaceImage.mutateAsync({ id: initialValues.id });
+          await deleteProjectImage.mutateAsync({
+            projectId: initialValues.id,
+            workspaceId,
+          });
           imageUrl = undefined;
         }
       }
 
       if (isEdit) {
-        await updateWorkspace.mutateAsync({
+        await updateProject.mutateAsync({
           id: initialValues?.id,
           name: values.name,
           image: imageUrl ?? undefined,
+          workspaceId,
         });
       } else {
         await createProject.mutateAsync({
