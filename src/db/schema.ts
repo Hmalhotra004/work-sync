@@ -1,9 +1,12 @@
 import { generateInviteCode } from "@/lib/utils";
 import { nanoid } from "nanoid";
 
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
+  integer,
   pgEnum,
   pgTable,
   text,
@@ -156,3 +159,45 @@ export const project = pgTable("project", {
     .$onUpdate(() => new Date())
     .notNull(),
 });
+
+export const taskStatus = pgEnum("taskStatus", [
+  "Backlog",
+  "Todo",
+  "In Progress",
+  "In Review",
+  "Done",
+]);
+
+export const task = pgTable(
+  "task",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    name: text("name").notNull(),
+    description: text("description"),
+    status: taskStatus("status").notNull().default("Todo"),
+    dueDate: timestamp("due_date").notNull(),
+    position: integer("position"),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    assigneeId: text("assignee_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    positionRange: check(
+      "position_range_check",
+      sql`${table.position} >=1000 AND ${table.position} <= 1000000`
+    ),
+  })
+);

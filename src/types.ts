@@ -3,7 +3,7 @@ import { LucideProps } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { type IconType as ReactIconType } from "react-icons/lib";
 import z from "zod";
-import { memberRoleSchema } from "./schemas";
+import { memberRoleSchema, taskStatusSchema } from "./schemas";
 import { AppRouter } from "./trpc/routers/_app";
 
 export type WorkspaceType =
@@ -12,6 +12,16 @@ export type WorkspaceType =
 export type ProjectType = inferRouterOutputs<AppRouter>["project"]["getOne"];
 
 export type MemberRoleType = z.infer<typeof memberRoleSchema>;
+
+export enum TaskStatusEnum {
+  BACKLOG = "BACKLOG",
+  TODO = "TODO",
+  IN_PROGRESS = "IN PROGRESS",
+  IN_REVIEW = "IN REVIEW",
+  DONE = "DONE",
+}
+
+export type TaskStatusType = z.infer<typeof taskStatusSchema>;
 
 export type IconType =
   | ReactIconType
