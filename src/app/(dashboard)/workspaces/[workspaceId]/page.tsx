@@ -23,17 +23,19 @@ const WorkspaceIdPage = async ({ params }: Props) => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  const id = (await params).workspaceId;
+  const workspaceId = (await params).workspaceId;
 
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(trpc.workspace.getOne.queryOptions({ id }));
+  void queryClient.prefetchQuery(
+    trpc.workspace.getOne.queryOptions({ workspaceId })
+  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<PageLoading />}>
         <ErrorBoundaryWrapper>
-          <WorkspaceIdView id={id} />
+          <WorkspaceIdView workspaceId={workspaceId} />
         </ErrorBoundaryWrapper>
       </Suspense>
     </HydrationBoundary>

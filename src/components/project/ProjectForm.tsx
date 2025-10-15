@@ -14,7 +14,7 @@ import FormInput from "@/components/form/FormInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createProjectSchema } from "@/schemas";
+import { createProjectSchema } from "@/schemas/project/schema";
 import { useTRPC } from "@/trpc/client";
 import type { ProjectType } from "@/types";
 import type z from "zod";
@@ -79,7 +79,7 @@ const ProjectForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         );
         await queryClient.invalidateQueries(
           trpc.project.getOne.queryOptions({
-            id: initialValues!.id!,
+            projectId: initialValues!.id!,
             workspaceId,
           })
         );

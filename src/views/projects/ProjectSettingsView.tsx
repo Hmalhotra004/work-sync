@@ -27,7 +27,7 @@ const ProjectSettingsView = ({ projectId, workspaceId }: Props) => {
   const queryClient = useQueryClient();
 
   const { data } = useSuspenseQuery(
-    trpc.project.getOne.queryOptions({ id: projectId, workspaceId })
+    trpc.project.getOne.queryOptions({ projectId, workspaceId })
   );
 
   const deleteProject = useMutation(

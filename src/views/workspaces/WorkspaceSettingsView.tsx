@@ -20,10 +20,10 @@ import {
 } from "@tanstack/react-query";
 
 interface Props {
-  id: string;
+  workspaceId: string;
 }
 
-const WorkspaceSettingsView = ({ id }: Props) => {
+const WorkspaceSettingsView = ({ workspaceId }: Props) => {
   const [copied, setCopied] = useState(false);
   const [reset, setReset] = useState(false);
 
@@ -31,7 +31,9 @@ const WorkspaceSettingsView = ({ id }: Props) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data } = useSuspenseQuery(trpc.workspace.getOne.queryOptions({ id }));
+  const { data } = useSuspenseQuery(
+    trpc.workspace.getOne.queryOptions({ workspaceId })
+  );
 
   const deleteWorkspace = useMutation(
     trpc.workspace.delete.mutationOptions({
@@ -50,7 +52,7 @@ const WorkspaceSettingsView = ({ id }: Props) => {
     trpc.workspace.resetInviteCode.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(
-          trpc.workspace.getOne.queryOptions({ id: data.id })
+          trpc.workspace.getOne.queryOptions({ workspaceId: data.id })
         );
         router.refresh();
         toast.success("Invite Code reset Success");
@@ -79,7 +81,7 @@ const WorkspaceSettingsView = ({ id }: Props) => {
 
     if (!ok) return;
 
-    await deleteWorkspace.mutateAsync({ id: data.id });
+    await deleteWorkspace.mutateAsync({ workspaceId: data.id });
   }
 
   async function handleReset() {
@@ -88,7 +90,7 @@ const WorkspaceSettingsView = ({ id }: Props) => {
     if (!ok) return;
     setReset(true);
 
-    await resetCode.mutateAsync({ id: data.id });
+    await resetCode.mutateAsync({ workspaceId: data.id });
   }
 
   async function handleCopyInviteLink() {

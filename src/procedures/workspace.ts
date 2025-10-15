@@ -15,9 +15,9 @@ import {
 
 import {
   createWorkspaceSchema,
-  IdSchema,
   updateWorkspaceSchema,
-} from "@/schemas";
+  workspaceIdSchema,
+} from "@/schemas/workspace/schema";
 
 export const workspaceRouter = createTRPCRouter({
   getMany: protectedProcedure.query(async ({ ctx }) => {
@@ -40,34 +40,41 @@ export const workspaceRouter = createTRPCRouter({
     return userWorkspaces;
   }),
 
-  getOne: protectedProcedure.input(IdSchema).query(async ({ ctx, input }) => {
-    const { id } = input;
+  getOne: protectedProcedure
+    .input(workspaceIdSchema)
+    .query(async ({ ctx, input }) => {
+      const { workspaceId } = input;
 
-    const [userWorkspace] = await db
-      .select({
-        id: workspace.id,
-        name: workspace.name,
-        image: workspace.image,
-        inviteCode: workspace.inviteCode,
-        ownerId: workspace.ownerId,
-        role: member.role,
-        createdAt: workspace.createdAt,
-        updatedAt: workspace.updatedAt,
-      })
-      .from(workspace)
-      .innerJoin(member, eq(member.workspaceId, workspace.id))
-      .where(and(eq(workspace.id, id), eq(member.userId, ctx.auth.user.id)))
-      .limit(1);
+      const [userWorkspace] = await db
+        .select({
+          id: workspace.id,
+          name: workspace.name,
+          image: workspace.image,
+          inviteCode: workspace.inviteCode,
+          ownerId: workspace.ownerId,
+          role: member.role,
+          createdAt: workspace.createdAt,
+          updatedAt: workspace.updatedAt,
+        })
+        .from(workspace)
+        .innerJoin(member, eq(member.workspaceId, workspace.id))
+        .where(
+          and(
+            eq(workspace.id, workspaceId),
+            eq(member.userId, ctx.auth.user.id)
+          )
+        )
+        .limit(1);
 
-    if (!userWorkspace) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Workspace not found",
-      });
-    }
+      if (!userWorkspace) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
 
-    return userWorkspace;
-  }),
+      return userWorkspace;
+    }),
 
   create: protectedProcedure
     .input(createWorkspaceSchema)
@@ -134,16 +141,16 @@ export const workspaceRouter = createTRPCRouter({
     }),
 
   deleteWorkspaceImage: protectedProcedure
-    .input(IdSchema)
+    .input(workspaceIdSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id } = input;
+      const { workspaceId } = input;
 
-      await verifyExactRole(id, ctx.auth.user.id, "Owner");
+      await verifyExactRole(workspaceId, ctx.auth.user.id, "Owner");
 
       const [workspaceToUpdate] = await db
         .select({ image: workspace.image })
         .from(workspace)
-        .where(eq(workspace.id, id))
+        .where(eq(workspace.id, workspaceId))
         .limit(1);
 
       if (!workspaceToUpdate) {
@@ -170,22 +177,22 @@ export const workspaceRouter = createTRPCRouter({
       await db
         .update(workspace)
         .set({ image: null })
-        .where(eq(workspace.id, input.id));
+        .where(eq(workspace.id, workspaceId));
 
       return { success: true };
     }),
 
   delete: protectedProcedure
-    .input(IdSchema)
+    .input(workspaceIdSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id } = input;
+      const { workspaceId } = input;
 
-      await verifyExactRole(id, ctx.auth.user.id, "Owner");
+      await verifyExactRole(workspaceId, ctx.auth.user.id, "Owner");
 
       const [workspaceToDelete] = await db
         .select({ id: workspace.id, image: workspace.image })
         .from(workspace)
-        .where(eq(workspace.id, input.id))
+        .where(eq(workspace.id, workspaceId))
         .limit(1);
 
       if (!workspaceToDelete) {
@@ -216,12 +223,12 @@ export const workspaceRouter = createTRPCRouter({
   join: protectedProcedure
     .input(
       z.object({
-        id: z.string().min(1),
+        workspaceId: z.string().min(1),
         code: z.string().min(6).max(6),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { code, id } = input;
+      const { code, workspaceId } = input;
 
       const [workspaceToJoin] = await db
         .select({
@@ -229,7 +236,7 @@ export const workspaceRouter = createTRPCRouter({
           inviteCode: workspace.inviteCode,
         })
         .from(workspace)
-        .where(eq(workspace.id, id))
+        .where(eq(workspace.id, workspaceId))
         .limit(1);
 
       if (!workspaceToJoin) {
@@ -275,14 +282,14 @@ export const workspaceRouter = createTRPCRouter({
     }),
 
   getWorkspaceInfo: protectedProcedure
-    .input(IdSchema)
+    .input(workspaceIdSchema)
     .query(async ({ input }) => {
-      const { id } = input;
+      const { workspaceId } = input;
 
       const [workspaceInfo] = await db
         .select({ name: workspace.name })
         .from(workspace)
-        .where(eq(workspace.id, id))
+        .where(eq(workspace.id, workspaceId))
         .limit(1);
 
       if (!workspaceInfo) {
@@ -296,17 +303,17 @@ export const workspaceRouter = createTRPCRouter({
     }),
 
   resetInviteCode: protectedProcedure
-    .input(IdSchema)
+    .input(workspaceIdSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id } = input;
+      const { workspaceId } = input;
 
       // Verify admin role
-      await verifyRole(id, ctx.auth.user.id, "Admin");
+      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
 
       const [updatedWorkspace] = await db
         .update(workspace)
         .set({ inviteCode: generateInviteCode(6) })
-        .where(eq(workspace.id, id))
+        .where(eq(workspace.id, workspaceId))
         .returning();
 
       return updatedWorkspace;

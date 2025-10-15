@@ -23,13 +23,13 @@ const JoinWorkspacePage = async ({ params }: Props) => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  const id = (await params).workspaceId;
+  const workspaceId = (await params).workspaceId;
   const code = (await params).inviteCode;
 
   const queryClient = getQueryClient();
 
   void queryClient.prefetchQuery(
-    trpc.workspace.getWorkspaceInfo.queryOptions({ id })
+    trpc.workspace.getWorkspaceInfo.queryOptions({ workspaceId })
   );
 
   return (
@@ -37,7 +37,7 @@ const JoinWorkspacePage = async ({ params }: Props) => {
       <Suspense fallback={<PageLoading />}>
         <ErrorBoundaryWrapper>
           <JoinWorkspaceView
-            id={id}
+            workspaceId={workspaceId}
             code={code}
           />
         </ErrorBoundaryWrapper>

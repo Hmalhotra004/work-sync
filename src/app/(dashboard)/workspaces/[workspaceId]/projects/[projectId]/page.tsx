@@ -29,7 +29,7 @@ const ProjectIdPage = async ({ params }: Props) => {
   const queryClient = getQueryClient();
 
   void queryClient.prefetchQuery(
-    trpc.project.getOne.queryOptions({ workspaceId, id: projectId })
+    trpc.project.getOne.queryOptions({ workspaceId, projectId })
   );
 
   return (

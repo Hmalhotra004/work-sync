@@ -21,17 +21,17 @@ import {
 import { useRouter } from "next/navigation";
 
 interface Props {
-  id: string;
+  workspaceId: string;
   code: string;
 }
 
-const JoinWorkspaceView = ({ code, id }: Props) => {
+const JoinWorkspaceView = ({ code, workspaceId }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
 
   const { data } = useSuspenseQuery(
-    trpc.workspace.getWorkspaceInfo.queryOptions({ id })
+    trpc.workspace.getWorkspaceInfo.queryOptions({ workspaceId })
   );
 
   const join = useMutation(
@@ -41,7 +41,7 @@ const JoinWorkspaceView = ({ code, id }: Props) => {
           trpc.workspace.getMany.queryOptions()
         );
         toast.success("Workspace Joined");
-        router.replace(`/workspaces/${id}`);
+        router.replace(`/workspaces/${workspaceId}`);
       },
       onError: (err) => toast.error(err.message),
     })
@@ -78,7 +78,9 @@ const JoinWorkspaceView = ({ code, id }: Props) => {
               Cancel
             </Button>
             <Button
-              onClick={async () => await join.mutateAsync({ code, id })}
+              onClick={async () =>
+                await join.mutateAsync({ code, workspaceId })
+              }
               disabled={isPending}
             >
               Join

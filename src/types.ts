@@ -3,7 +3,8 @@ import { LucideProps } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { type IconType as ReactIconType } from "react-icons/lib";
 import z from "zod";
-import { memberRoleSchema, taskStatusSchema } from "./schemas";
+import { taskStatusSchema } from "./schemas/task/schema";
+import { memberRoleSchema } from "./schemas/workspace/schema";
 import { AppRouter } from "./trpc/routers/_app";
 
 export type WorkspaceType =

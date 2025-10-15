@@ -14,7 +14,7 @@ import FormInput from "@/components/form/FormInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createWorkspaceSchema } from "@/schemas";
+import { createWorkspaceSchema } from "@/schemas/workspace/schema";
 import { useTRPC } from "@/trpc/client";
 import type { WorkspaceType } from "@/types";
 import type z from "zod";
@@ -75,7 +75,9 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
           trpc.workspace.getMany.queryOptions()
         );
         await queryClient.invalidateQueries(
-          trpc.workspace.getOne.queryOptions({ id: initialValues!.id! })
+          trpc.workspace.getOne.queryOptions({
+            workspaceId: initialValues!.id!,
+          })
         );
         toast.success("Workspace Updated");
         onSuccess?.();
@@ -146,7 +148,9 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
 
       if (file) {
         if (isEdit && initialValues.image) {
-          await deleteWorkspaceImage.mutateAsync({ id: initialValues.id });
+          await deleteWorkspaceImage.mutateAsync({
+            workspaceId: initialValues.id,
+          });
         }
 
         imageUrl = await uploadImageToCloudinary(file);
@@ -154,7 +158,9 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         if (preview) {
           imageUrl = preview;
         } else {
-          await deleteWorkspaceImage.mutateAsync({ id: initialValues.id });
+          await deleteWorkspaceImage.mutateAsync({
+            workspaceId: initialValues.id,
+          });
           imageUrl = undefined;
         }
       }

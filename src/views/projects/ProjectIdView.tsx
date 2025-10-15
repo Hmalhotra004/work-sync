@@ -16,7 +16,7 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
   const trpc = useTRPC();
 
   const { data: project } = useSuspenseQuery(
-    trpc.project.getOne.queryOptions({ workspaceId, id: projectId })
+    trpc.project.getOne.queryOptions({ workspaceId, projectId })
   );
 
   return (
