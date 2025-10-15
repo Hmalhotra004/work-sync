@@ -178,7 +178,7 @@ export const task = pgTable(
     description: text("description"),
     status: taskStatus("status").notNull().default("Todo"),
     dueDate: timestamp("due_date").notNull(),
-    position: integer("position"),
+    position: integer("position").notNull().default(1000),
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
