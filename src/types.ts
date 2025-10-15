@@ -13,14 +13,6 @@ export type ProjectType = inferRouterOutputs<AppRouter>["project"]["getOne"];
 
 export type MemberRoleType = z.infer<typeof memberRoleSchema>;
 
-export enum TaskStatusEnum {
-  BACKLOG = "BACKLOG",
-  TODO = "TODO",
-  IN_PROGRESS = "IN PROGRESS",
-  IN_REVIEW = "IN REVIEW",
-  DONE = "DONE",
-}
-
 export type TaskStatusType = z.infer<typeof taskStatusSchema>;
 
 export type IconType =

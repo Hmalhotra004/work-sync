@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { member, workspace } from "@/db/schema";
+import { member, project, workspace } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -78,4 +78,31 @@ export const projectProcedure = protectedProcedure
     }
 
     return next({ ctx: { ...ctx, role: memberRecord.role } });
+  });
+
+export const taskProcedure = projectProcedure
+  .input(
+    z.object({
+      projectId: z.string().min(1, { error: "ProjectId is required" }),
+    })
+  )
+  .use(async ({ next, input }) => {
+    const { projectId, workspaceId } = input;
+
+    const [existingProject] = await db
+      .select({})
+      .from(project)
+      .where(
+        and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
+      )
+      .limit(1);
+
+    if (!existingProject) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Project not found",
+      });
+    }
+
+    return next();
   });

@@ -1,7 +1,6 @@
 import { project, task, workspace } from "@/db/schema";
 import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 import z from "zod";
-import { TaskStatusEnum } from "./types";
 
 export const IdSchema = z.object({
   id: z.string().min(1, { error: "ID is required" }),
@@ -19,13 +18,10 @@ export const memberRoleSchema = z.enum([
   "Member",
 ]);
 
-export const taskStatusSchema = z.enum([
-  "Backlog",
-  "Todo",
-  "In Progress",
-  "In Review",
-  "Done",
-]);
+export const taskStatusSchema = z.enum(
+  ["Backlog", "Todo", "In Progress", "In Review", "Done"],
+  { error: "Status is required" }
+);
 
 export const createWorkspaceSchema = createInsertSchema(workspace)
   .omit({
@@ -87,7 +83,7 @@ export const createTaskSchema = createInsertSchema(task)
   .extend({
     name: z.string().min(1, { error: "Project name is required" }),
     description: z.string().optional(),
-    status: z.nativeEnum(TaskStatusEnum, { error: "status is required" }),
+    status: taskStatusSchema,
     dueDate: z.date({ error: "Due Date is required" }),
     workspaceId: z.string().min(1, { error: "workspaceId is required" }),
     projectId: z.string().min(1, { error: "projectId is required" }),
@@ -104,7 +100,7 @@ export const updateTaskSchema = createUpdateSchema(task)
     id: z.string().min(1, { error: "id is required" }),
     name: z.string().min(1, { error: "Project name is required" }),
     description: z.string().optional(),
-    status: z.nativeEnum(TaskStatusEnum, { error: "status is required" }),
+    status: taskStatusSchema,
     dueDate: z.date({ error: "Due Date is required" }),
     workspaceId: z.string().min(1, { error: "workspaceId is required" }),
     projectId: z.string().min(1, { error: "projectId is required" }),
