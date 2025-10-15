@@ -1,5 +1,6 @@
 "use client";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
+import TasksSwitcher from "@/components/tasks/TasksSwitcher";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
           </Button>
         </div>
       </div>
+      <TasksSwitcher />
     </div>
   );
 };
