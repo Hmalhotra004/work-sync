@@ -7,6 +7,20 @@ export const taskStatusSchema = z.enum(
   { error: "Status is required" }
 );
 
+export const taskIdSchema = z.object({
+  taskId: z.string().trim().min(1, { error: "TaskId is required" }),
+});
+
+export const taskGetManySchema = z.object({
+  search: z.string().trim().optional(),
+  dueDate: z.date().optional(),
+  status: z
+    .enum(["Backlog", "Todo", "In Progress", "In Review", "Done"])
+    .optional(),
+  assigneeId: z.string().optional(),
+  projectIdN: z.string().optional(),
+});
+
 export const createTaskSchema = createInsertSchema(task)
   .omit({
     id: true,
