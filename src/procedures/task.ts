@@ -1,13 +1,14 @@
 import { db } from "@/db";
 import { project, task } from "@/db/schema";
 import { verifyRole } from "@/lib/serverHelpers";
+import { TRPCError } from "@trpc/server";
+import { and, asc, desc, eq, ilike } from "drizzle-orm";
+
 import {
   createTaskSchema,
   taskGetManySchema,
   taskIdSchema,
 } from "@/schemas/task/schema";
-import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, ilike } from "drizzle-orm";
 
 import {
   createTRPCRouter,
@@ -60,7 +61,7 @@ export const taskRouter = createTRPCRouter({
       await verifyRole(workspaceId, ctx.auth.user.id, "Moderator");
 
       const [existingProject] = await db
-        .select({})
+        .select()
         .from(project)
         .where(eq(project.id, projectId))
         .limit(1);
