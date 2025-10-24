@@ -13,38 +13,35 @@ import {
 
 import {
   createTRPCRouter,
+  projectProcedure,
   protectedProcedure,
   taskProcedure,
 } from "@/trpc/init";
 
 export const taskRouter = createTRPCRouter({
-  getMany: taskProcedure.input(taskGetManySchema).query(async ({ input }) => {
-    const {
-      projectIdN: projectId,
-      workspaceId,
-      assigneeId,
-      dueDate,
-      search,
-      status,
-    } = input;
+  getMany: projectProcedure
+    .input(taskGetManySchema)
+    .query(async ({ input }) => {
+      const { projectId, workspaceId, assigneeId, dueDate, search, status } =
+        input;
 
-    const tasks = await db
-      .select()
-      .from(task)
-      .where(
-        and(
-          eq(task.workspaceId, workspaceId),
-          projectId ? eq(task.projectId, projectId) : undefined,
-          assigneeId ? eq(task.assigneeId, assigneeId) : undefined,
-          dueDate ? eq(task.dueDate, dueDate) : undefined,
-          status ? eq(task.status, status) : undefined,
-          search ? ilike(task.name, `%${search}%`) : undefined
+      const tasks = await db
+        .select()
+        .from(task)
+        .where(
+          and(
+            eq(task.workspaceId, workspaceId),
+            projectId ? eq(task.projectId, projectId) : undefined,
+            assigneeId ? eq(task.assigneeId, assigneeId) : undefined,
+            dueDate ? eq(task.dueDate, dueDate) : undefined,
+            status ? eq(task.status, status) : undefined,
+            search ? ilike(task.name, `%${search}%`) : undefined
+          )
         )
-      )
-      .orderBy(desc(task.createdAt));
+        .orderBy(desc(task.createdAt));
 
-    return tasks;
-  }),
+      return tasks;
+    }),
 
   getOne: taskProcedure.input(taskGetOneSchema).query(async ({ input }) => {
     const { projectId, workspaceId, taskId } = input;

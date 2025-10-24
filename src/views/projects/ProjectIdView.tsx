@@ -45,7 +45,10 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
           </Button>
         </div>
       </div>
-      <TasksSwitcher />
+      <TasksSwitcher
+        workspaceId={workspaceId}
+        projectId={projectId}
+      />
     </div>
   );
 };

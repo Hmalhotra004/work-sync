@@ -32,6 +32,10 @@ const ProjectIdPage = async ({ params }: Props) => {
     trpc.project.getOne.queryOptions({ workspaceId, projectId })
   );
 
+  void queryClient.prefetchQuery(
+    trpc.task.getMany.queryOptions({ workspaceId, projectId })
+  );
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<PageLoading />}>

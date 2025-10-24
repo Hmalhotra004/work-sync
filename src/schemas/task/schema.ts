@@ -22,8 +22,8 @@ export const taskGetManySchema = z.object({
   status: z
     .enum(["Backlog", "Todo", "In Progress", "In Review", "Done"])
     .optional(),
-  assigneeId: z.string().optional(),
-  projectIdN: z.string().optional(),
+  assigneeId: z.string().trim().optional(),
+  projectId: z.string().trim().optional(),
 });
 
 export const taskGetOneSchema = z.object({

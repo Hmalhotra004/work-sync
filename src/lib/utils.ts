@@ -18,6 +18,21 @@ export function generateInviteCode(length: number): string {
   return result;
 }
 
+export const tabs = [
+  {
+    label: "Table",
+    value: "table",
+  },
+  {
+    label: "Kanban",
+    value: "kanban",
+  },
+  {
+    label: "Calender",
+    value: "calender",
+  },
+];
+
 export const TASKSTATUSMAP = [
   {
     value: TaskStatusEnum.Backlog,
