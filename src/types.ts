@@ -1,8 +1,10 @@
 import { inferRouterOutputs } from "@trpc/server";
+import { createSelectSchema } from "drizzle-zod";
 import { LucideProps } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { type IconType as ReactIconType } from "react-icons/lib";
 import z from "zod";
+import { task } from "./db/schema";
 import { taskStatusSchema } from "./schemas/task/schema";
 import { memberRoleSchema } from "./schemas/workspace/schema";
 import { AppRouter } from "./trpc/routers/_app";
@@ -11,6 +13,11 @@ export type WorkspaceType =
   inferRouterOutputs<AppRouter>["workspace"]["getOne"];
 
 export type ProjectType = inferRouterOutputs<AppRouter>["project"]["getOne"];
+
+const taskT = createSelectSchema(task);
+
+export type TaskType = z.infer<typeof taskT>;
+// export type TaskType = inferRouterOutputs<AppRouter>["task"]["getOne"];
 
 export type MemberRoleType = z.infer<typeof memberRoleSchema>;
 
