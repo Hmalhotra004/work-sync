@@ -6,13 +6,20 @@ import ProjectIdView from "@/views/projects/ProjectIdView";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { type SearchParams } from "nuqs";
 import { Suspense } from "react";
+
+import {
+  loadSearchParams,
+  normalizeTaskFilters,
+} from "@/params/taskFilterParams";
 
 interface Props {
   params: Promise<{ workspaceId: string; projectId: string }>;
+  searchParams: Promise<SearchParams>;
 }
 
-const ProjectIdPage = async ({ params }: Props) => {
+const ProjectIdPage = async ({ params, searchParams }: Props) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -22,6 +29,11 @@ const ProjectIdPage = async ({ params }: Props) => {
   } else if (!session.user.emailVerified) {
     redirect(`/email-verification?email=${session.user.email}`);
   }
+
+  const filters = await loadSearchParams(searchParams);
+  const normalizedFilters = normalizeTaskFilters(filters);
+
+  const { assigneeId, dueDate, search, status } = normalizedFilters;
 
   const workspaceId = (await params).workspaceId;
   const projectId = (await params).projectId;
@@ -33,7 +45,14 @@ const ProjectIdPage = async ({ params }: Props) => {
   );
 
   void queryClient.prefetchQuery(
-    trpc.task.getMany.queryOptions({ workspaceId, projectId })
+    trpc.task.getMany.queryOptions({
+      workspaceId,
+      projectId,
+      assigneeId,
+      search,
+      status,
+      dueDate,
+    })
   );
 
   return (
