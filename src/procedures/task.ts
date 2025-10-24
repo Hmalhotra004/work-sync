@@ -7,6 +7,7 @@ import { and, asc, desc, eq, ilike } from "drizzle-orm";
 import {
   createTaskSchema,
   taskGetManySchema,
+  taskGetOneSchema,
   taskIdSchema,
 } from "@/schemas/task/schema";
 
@@ -45,9 +46,34 @@ export const taskRouter = createTRPCRouter({
     return tasks;
   }),
 
+  getOne: taskProcedure.input(taskGetOneSchema).query(async ({ input }) => {
+    const { projectId, workspaceId, taskId } = input;
+
+    const [existingTask] = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.workspaceId, workspaceId),
+          eq(task.projectId, projectId),
+          eq(task.id, taskId)
+        )
+      )
+      .limit(1);
+
+    if (!existingTask) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Task not found",
+      });
+    }
+
+    return existingTask;
+  }),
+
   create: protectedProcedure
     .input(createTaskSchema)
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const {
         assigneeId,
         dueDate,

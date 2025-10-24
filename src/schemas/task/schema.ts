@@ -21,6 +21,10 @@ export const taskGetManySchema = z.object({
   projectIdN: z.string().optional(),
 });
 
+export const taskGetOneSchema = z.object({
+  taskId: z.string().trim().min(1, { error: "TaskId is requried" }),
+});
+
 export const createTaskSchema = createInsertSchema(task)
   .omit({
     id: true,
