@@ -76,13 +76,22 @@ export const taskRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const {
         assigneeId,
-        dueDate,
+        dueDate: date,
         name,
         projectId,
         status,
         workspaceId,
         description,
       } = input;
+
+      const dueDate = new Date(date);
+
+      if (isNaN(dueDate.getTime())) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid Date",
+        });
+      }
 
       await verifyRole(workspaceId, ctx.auth.user.id, "Moderator");
 

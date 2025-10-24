@@ -1,6 +1,11 @@
 import { task } from "@/db/schema";
-import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 import z from "zod";
+
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 
 export const taskStatusSchema = z.enum(
   ["Backlog", "Todo", "In Progress", "In Review", "Done"],
@@ -33,13 +38,13 @@ export const createTaskSchema = createInsertSchema(task)
     updatedAt: true,
   })
   .extend({
-    name: z.string().min(1, { error: "Project name is required" }),
-    description: z.string().optional(),
+    name: z.string().trim().min(1, { error: "Task name is required" }),
+    description: z.string().trim().optional(),
     status: taskStatusSchema,
-    dueDate: z.date({ error: "Due Date is required" }),
-    workspaceId: z.string().min(1, { error: "workspaceId is required" }),
-    projectId: z.string().min(1, { error: "projectId is required" }),
-    assigneeId: z.string().min(1, { error: "assigneeId is required" }),
+    dueDate: z.string().trim().min(1, { error: "Due Date is required" }),
+    workspaceId: z.string().trim().min(1, { error: "workspaceId is required" }),
+    projectId: z.string().trim().min(1, { error: "projectId is required" }),
+    assigneeId: z.string().trim().min(1, { error: "assigneeId is required" }),
   });
 
 export const updateTaskSchema = createUpdateSchema(task)
@@ -58,3 +63,5 @@ export const updateTaskSchema = createUpdateSchema(task)
     projectId: z.string().min(1, { error: "projectId is required" }),
     assigneeId: z.string().min(1, { error: "assigneeId is required" }),
   });
+
+export const taskSelectSchema = createSelectSchema(task);

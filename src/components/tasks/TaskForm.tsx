@@ -3,16 +3,20 @@
 import DottedSeparator from "@/components/DottedSeparator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
+import MemberAvatar from "@/components/member/MemberAvatar";
+import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
+import DatePicker from "@/components/ui/date-picker";
+import { Textarea } from "@/components/ui/textarea";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useProjectId } from "@/hooks/useProjectId";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
-import { cn } from "@/lib/utils";
+import { cn, TASKSTATUSMAP } from "@/lib/utils";
 import { createTaskSchema } from "@/schemas/task/schema";
 import { useTRPC } from "@/trpc/client";
-import type { TaskType } from "@/types";
+import { TaskStatusEnum, type TaskType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
@@ -26,6 +30,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface Props {
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -35,9 +47,9 @@ interface Props {
 const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const workspaceId = useWorkspaceId();
   const projectId = useProjectId();
+  const isMobile = useIsMobile();
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery(
     trpc.project.getMany.queryOptions({ workspaceId })
@@ -52,11 +64,11 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     defaultValues: {
       name: initialValues?.name ?? "",
       description: initialValues?.description ?? "",
-      dueDate: initialValues?.dueDate ?? new Date(),
-      status: initialValues?.status ?? "Todo",
+      dueDate: initialValues?.dueDate ?? "",
+      status: initialValues?.status ?? TaskStatusEnum.Todo,
       assigneeId: initialValues?.assigneeId ?? "",
-      projectId,
-      workspaceId,
+      projectId: initialValues?.projectId ?? projectId ?? "",
+      workspaceId: initialValues?.workspaceId ?? workspaceId,
     },
   });
 
@@ -78,6 +90,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     })
   );
 
+  // TODO:Update
   const updateTask = useMutation(
     trpc.project.update.mutationOptions({
       onSuccess: async () => {
@@ -101,7 +114,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
 
   const isLoading = isLoadingMembers || isLoadingProjects;
 
-  if (isLoading) {
+  if (isLoading || !projects || !members) {
     return (
       <div className="flex items-center justify-center p-6">
         <Loader className="size-5 text-muted-foreground" />
@@ -124,8 +137,8 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         dueDate: values.dueDate,
         status: values.status,
         assigneeId: values.assigneeId,
-        projectId,
-        workspaceId,
+        projectId: values.projectId,
+        workspaceId: values.workspaceId,
       });
 
       form.reset();
@@ -151,6 +164,162 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                   autoComplete="off"
                   disabled={isPending}
                   field={field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div
+          className={cn(
+            "grid grid-cols-2 gap-x-4 w-full",
+            isMobile && "flex flex-col gap-y-4 w-full"
+          )}
+        >
+          <FormField
+            name="dueDate"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Due Date</FormLabel>
+                <FormControl>
+                  <DatePicker {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="status"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <FormMessage />
+
+                  <SelectContent>
+                    {TASKSTATUSMAP.map((t) => (
+                      <SelectItem
+                        key={t.value}
+                        value={t.value}
+                      >
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div
+          className={cn(
+            "grid grid-cols-2 gap-x-4",
+            isMobile && "flex flex-col gap-y-4 w-full"
+          )}
+        >
+          <FormField
+            name="assigneeId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assignee</FormLabel>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Assignee" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <FormMessage />
+
+                  <SelectContent>
+                    {members.members.map((mem) => (
+                      <SelectItem
+                        key={mem.userId}
+                        value={mem.userId}
+                      >
+                        <div className="flex items-center gap-x-2">
+                          <MemberAvatar
+                            name={mem.name}
+                            image={mem.image ?? undefined}
+                            className="size-6"
+                          />
+                          {mem.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="projectId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project</FormLabel>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Project" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <FormMessage />
+
+                  <SelectContent>
+                    {projects.map((p) => (
+                      <SelectItem
+                        key={p.id}
+                        value={p.id}
+                      >
+                        <div className="flex items-center gap-x-2">
+                          <ProjectAvatar
+                            name={p.name}
+                            image={p.image ?? undefined}
+                            className="size-6"
+                          />
+                          {p.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          name="description"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter Description"
+                  disabled={isPending}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
