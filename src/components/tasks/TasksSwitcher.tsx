@@ -2,30 +2,39 @@ import DottedSeparator from "@/components/DottedSeparator";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
+import { tabs } from "@/lib/utils";
+import { useTRPC } from "@/trpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
+import { useQueryState } from "nuqs";
+import { Spinner } from "../ui/spinner";
 
-const TasksSwitcher = () => {
+interface Props {
+  workspaceId: string;
+  projectId: string;
+}
+
+const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
+  const [view, setView] = useQueryState("task-view", {
+    defaultValue: "table",
+  });
+
+  const trpc = useTRPC();
+
   const { open } = useCreateTaskModal();
 
-  const tabs = [
-    {
-      label: "Table",
-      value: "table",
-    },
-    {
-      label: "Kanban",
-      value: "kanban",
-    },
-    {
-      label: "Calender",
-      value: "calender",
-    },
-  ];
+  const { data, isLoading: isLoadingTasks } = useSuspenseQuery(
+    trpc.task.getMany.queryOptions({
+      workspaceId,
+      projectId,
+    })
+  );
 
   return (
     <Tabs
+      defaultValue={view}
+      onValueChange={setView}
       className="flex-1 w-full border rounded-lg"
-      defaultValue="table"
     >
       <div className="h-full flex flex-col overflow-auto p-4">
         <div className="flex flex-col gap-y-2 lg:flex-row justify-between items-center">
@@ -54,29 +63,35 @@ const TasksSwitcher = () => {
         <h1>filters</h1>
 
         <DottedSeparator className="my-4" />
+        {isLoadingTasks ? (
+          <div className="w-full border rounded-lg h-[200px] flex flex-col items-center justify-center">
+            <Spinner className="size-5" />
+          </div>
+        ) : (
+          <>
+            <TabsContent
+              value="table"
+              className="mt-0"
+            >
+              Tabel
+              {JSON.stringify(data)}
+            </TabsContent>
 
-        <>
-          <TabsContent
-            value="table"
-            className="mt-0"
-          >
-            Tabel
-          </TabsContent>
+            <TabsContent
+              value="kanban"
+              className="mt-0"
+            >
+              kanban
+            </TabsContent>
 
-          <TabsContent
-            value="kanban"
-            className="mt-0"
-          >
-            kanban
-          </TabsContent>
-
-          <TabsContent
-            value="calender"
-            className="mt-0"
-          >
-            Ch
-          </TabsContent>
-        </>
+            <TabsContent
+              value="calender"
+              className="mt-0"
+            >
+              Ch
+            </TabsContent>
+          </>
+        )}
       </div>
     </Tabs>
   );
