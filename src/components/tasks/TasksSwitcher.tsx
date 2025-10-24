@@ -1,9 +1,12 @@
+import DottedSeparator from "@/components/DottedSeparator";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
 import { PlusIcon } from "lucide-react";
-import DottedSeparator from "../DottedSeparator";
-import { Button } from "../ui/button";
 
 const TasksSwitcher = () => {
+  const { open } = useCreateTaskModal();
+
   const tabs = [
     {
       label: "Table",
@@ -40,14 +43,18 @@ const TasksSwitcher = () => {
           <Button
             size="sm"
             className="w-full lg:w-auto"
+            onClick={open}
           >
-            <PlusIcon className="size-4 mr-2" /> New
+            <PlusIcon className="size-4" /> New
           </Button>
         </div>
+
         <DottedSeparator className="my-4" />
-        {/* TODO:ADD FIlters */}
-        filters
+
+        <h1>filters</h1>
+
         <DottedSeparator className="my-4" />
+
         <>
           <TabsContent
             value="table"
