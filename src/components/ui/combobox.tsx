@@ -1,6 +1,5 @@
 "use client";
 
-import MemberAvatar from "@/components/member/MemberAvatar";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { useState } from "react";
@@ -20,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { ClassValue } from "clsx";
 
 type OptionType = {
   value: string;
@@ -32,9 +32,21 @@ interface Props {
   value: string | undefined;
   onChange: (value: string) => void;
   placeholder?: string;
+  Avatar: React.ComponentType<{
+    name: string;
+    image?: string;
+    className?: ClassValue;
+    fallbackClassName?: ClassValue;
+  }>;
 }
 
-export function Combobox({ options, placeholder, onChange, value }: Props) {
+export function Combobox({
+  options,
+  placeholder,
+  onChange,
+  value,
+  Avatar,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   const selectedOption = options.find((op) => op.value === value);
@@ -57,7 +69,7 @@ export function Combobox({ options, placeholder, onChange, value }: Props) {
         >
           {selectedOption ? (
             <div className="flex items-center gap-2">
-              <MemberAvatar
+              <Avatar
                 name={selectedOption.label}
                 image={selectedOption.image ?? undefined}
                 className="size-6"
@@ -65,7 +77,7 @@ export function Combobox({ options, placeholder, onChange, value }: Props) {
               {selectedOption.label}
             </div>
           ) : (
-            `Select an ${placeholder}...`
+            `Select ${placeholder}...`
           )}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -84,7 +96,7 @@ export function Combobox({ options, placeholder, onChange, value }: Props) {
                     setOpen(false);
                   }}
                 >
-                  <MemberAvatar
+                  <Avatar
                     name={option.label}
                     image={option.image ?? undefined}
                     className="size-6"

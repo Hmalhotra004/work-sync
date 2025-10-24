@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import MemberAvatar from "../member/MemberAvatar";
 import { Combobox } from "../ui/combobox";
 
 interface Props {
@@ -240,6 +241,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                   <Combobox
                     {...field}
                     placeholder="Assignee"
+                    Avatar={MemberAvatar}
                     options={members.members.map((m) => ({
                       value: m.userId,
                       label: m.name,
