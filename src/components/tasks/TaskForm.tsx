@@ -3,7 +3,6 @@
 import DottedSeparator from "@/components/DottedSeparator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
-import MemberAvatar from "@/components/member/MemberAvatar";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
 import DatePicker from "@/components/ui/date-picker";
@@ -37,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "../ui/combobox";
 
 interface Props {
   onSuccess?: () => void;
@@ -236,35 +236,18 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Assignee</FormLabel>
-                <Select
-                  defaultValue={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Assignee" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <FormMessage />
-
-                  <SelectContent>
-                    {members.members.map((mem) => (
-                      <SelectItem
-                        key={mem.userId}
-                        value={mem.userId}
-                      >
-                        <div className="flex items-center gap-x-2">
-                          <MemberAvatar
-                            name={mem.name}
-                            image={mem.image ?? undefined}
-                            className="size-6"
-                          />
-                          {mem.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Combobox
+                    {...field}
+                    placeholder="Assignee"
+                    options={members.members.map((m) => ({
+                      value: m.userId,
+                      label: m.name,
+                      image: m.image,
+                    }))}
+                  />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
