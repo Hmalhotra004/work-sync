@@ -1,13 +1,15 @@
 import DottedSeparator from "@/components/DottedSeparator";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
+import { useTasksFilters } from "@/hooks/useTasksFilters";
 import { tabs } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { Spinner } from "../ui/spinner";
+import TaskFilters from "./TaskFilters";
 
 interface Props {
   workspaceId: string;
@@ -18,15 +20,20 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
+  const [{ assigneeId, dueDate, search, status }] = useTasksFilters();
 
   const trpc = useTRPC();
 
   const { open } = useCreateTaskModal();
 
-  const { data, isLoading: isLoadingTasks } = useSuspenseQuery(
+  const { data, isLoading: isLoadingTasks } = useQuery(
     trpc.task.getMany.queryOptions({
       workspaceId,
       projectId,
+      assigneeId,
+      dueDate,
+      status,
+      search,
     })
   );
 
@@ -60,7 +67,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
 
         <DottedSeparator className="my-4" />
 
-        <h1>filters</h1>
+        <TaskFilters hideProjectFilter />
 
         <DottedSeparator className="my-4" />
         {isLoadingTasks ? (
