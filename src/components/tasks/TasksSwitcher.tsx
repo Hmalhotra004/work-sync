@@ -7,6 +7,7 @@ import { useTasksFilters } from "@/hooks/useTasksFilters";
 import { tabs } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import TaskFilters from "./TaskFilters";
@@ -20,6 +21,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
+
   const [{ assigneeId, dueDate, search, status }] = useTasksFilters();
 
   const trpc = useTRPC();
@@ -70,6 +72,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
         <TaskFilters hideProjectFilter />
 
         <DottedSeparator className="my-4" />
+
         {isLoadingTasks ? (
           <div className="w-full border rounded-lg h-[200px] flex flex-col items-center justify-center">
             <Spinner className="size-5" />
@@ -80,8 +83,17 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
               value="table"
               className="mt-0"
             >
-              Tabel
-              {JSON.stringify(data)}
+              {data?.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-x-4"
+                >
+                  <h1>{p.name}</h1>
+                  <h1>{p.projectId}</h1>
+                  <h1>{p.status}</h1>
+                  <h1>{format(p.dueDate, "PPP")}</h1>
+                </div>
+              ))}
             </TabsContent>
 
             <TabsContent
