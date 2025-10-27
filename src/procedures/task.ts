@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { project, task } from "@/db/schema";
 import { verifyRole } from "@/lib/serverHelpers";
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, ilike } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, lte } from "drizzle-orm";
 
 import {
   createTaskSchema,
@@ -17,28 +17,43 @@ import {
   protectedProcedure,
   taskProcedure,
 } from "@/trpc/init";
+import { endOfDay, startOfDay } from "date-fns";
 
 export const taskRouter = createTRPCRouter({
   getMany: projectProcedure
     .input(taskGetManySchema)
     .query(async ({ input }) => {
-      const { projectId, workspaceId, assigneeId, dueDate, search, status } =
-        input;
+      const {
+        projectId,
+        workspaceId,
+        assigneeId,
+        dueDate: date,
+        search,
+        status,
+      } = input;
+
+      const today = new Date();
+      const dueDate = date ? new Date(date) : null;
+
+      const conditions = [
+        eq(task.workspaceId, workspaceId),
+        projectId ? eq(task.projectId, projectId) : undefined,
+        assigneeId ? eq(task.assigneeId, assigneeId) : undefined,
+        status ? eq(task.status, status) : undefined,
+        search ? ilike(task.name, `%${search}%`) : undefined,
+        dueDate
+          ? and(
+              gte(task.dueDate, startOfDay(today)),
+              lte(task.dueDate, endOfDay(dueDate))
+            )
+          : undefined,
+      ].filter(Boolean);
 
       const tasks = await db
         .select()
         .from(task)
-        .where(
-          and(
-            eq(task.workspaceId, workspaceId),
-            projectId ? eq(task.projectId, projectId) : undefined,
-            assigneeId ? eq(task.assigneeId, assigneeId) : undefined,
-            dueDate ? eq(task.dueDate, dueDate) : undefined,
-            status ? eq(task.status, status) : undefined,
-            search ? ilike(task.name, `%${search}%`) : undefined
-          )
-        )
-        .orderBy(desc(task.createdAt));
+        .where(and(...conditions))
+        .orderBy(desc(task.createdAt), desc(task.name));
 
       return tasks;
     }),

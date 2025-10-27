@@ -82,7 +82,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
           trpc.project.getOne.queryOptions({ workspaceId, projectId })
         );
         await queryClient.invalidateQueries(
-          trpc.task.getMany.queryOptions({ workspaceId, projectId })
+          trpc.task.getMany.queryOptions({ workspaceId })
         );
         toast.success("Task Created");
         onSuccess?.();

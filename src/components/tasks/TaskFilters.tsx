@@ -1,8 +1,8 @@
 import MemberAvatar from "@/components/member/MemberAvatar";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
 import DatePicker from "@/components/ui/date-picker";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
 import { useTasksFilters } from "@/hooks/useTasksFilters";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
 import { TASKSTATUSMAP } from "@/lib/utils";
@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FilterCombobox } from "../ui/filter-combobox";
 
 interface Props {
   hideProjectFilter?: boolean;
@@ -30,48 +29,49 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
   const workspaceId = useWorkspaceId();
 
   const [filters, setFilters] = useTasksFilters();
-
-  const { assigneeId, dueDate, projectId, search, status } = filters;
+  const { assigneeId, dueDate, projectId, status, search } = filters;
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery(
     trpc.project.getMany.queryOptions({ workspaceId })
   );
-
   const { data: members, isLoading: isLoadingMembers } = useQuery(
     trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
   );
+
+  const isLoading = isLoadingMembers || isLoadingProjects;
+  if (isLoading || !members || !projects) return null;
 
   const onStatusChange = (value: string) => {
     setFilters({ status: value === "all" ? null : (value as TaskStatusEnum) });
   };
 
   const onAssigneeIdChange = (value: string) => {
-    setFilters({ assigneeId: value === "all" ? null : (value as string) });
+    setFilters({ assigneeId: value === "all" ? null : value });
   };
 
   const onProjectChange = (value: string) => {
-    setFilters({ projectId: value === "all" ? null : (value as string) });
+    setFilters({ projectId: value === "all" ? null : value });
   };
 
-  function clearFilters() {
+  const clearFilters = () => {
     setFilters({
       assigneeId: null,
       dueDate: null,
-      search: null,
+      projectId: null,
       status: null,
+      search: null,
     });
-  }
+  };
 
-  const isLoading = isLoadingMembers || isLoadingProjects;
-
-  if (isLoading || !members || !projects) return null;
+  const hasActiveFilters =
+    !!assigneeId || !!dueDate || !!projectId || !!status || !!search;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-2">
-      {/* status */}
+    <div className="flex flex-col lg:flex-row gap-2 items-center flex-wrap">
+      {/* Status Filter */}
       <Select
-        defaultValue={status ?? undefined}
-        onValueChange={(value) => onStatusChange(value)}
+        value={status ?? "all"}
+        onValueChange={onStatusChange}
       >
         <SelectTrigger className="w-full lg:w-auto h-8">
           <div className="flex items-center pr-2">
@@ -79,7 +79,6 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
             <SelectValue placeholder="All statuses" />
           </div>
         </SelectTrigger>
-
         <SelectContent>
           <SelectItem value="all">All Statuses</SelectItem>
           <SelectSeparator />
@@ -94,17 +93,12 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
         </SelectContent>
       </Select>
 
-      {/* AssigneeId */}
+      {/* Assignee Filter */}
       <FilterCombobox
         Avatar={MemberAvatar}
-        onChange={(value) => onAssigneeIdChange(value)}
         placeholder="Assignee"
         options={[
-          {
-            value: "all",
-            label: "All Assignees",
-            image: null,
-          },
+          { value: "all", label: "All Assignees", image: null },
           ...members.members.map((m) => ({
             value: m.userId,
             label: m.name,
@@ -112,20 +106,16 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
           })),
         ]}
         value={assigneeId ?? "all"}
+        onChange={onAssigneeIdChange}
       />
 
-      {/* Project */}
+      {/* Project Filter */}
       {!hideProjectFilter && (
-        <Combobox
+        <FilterCombobox
           Avatar={ProjectAvatar}
-          onChange={(value) => onProjectChange(value)}
           placeholder="Project"
           options={[
-            {
-              value: "all",
-              label: "All Projects",
-              image: null,
-            },
+            { value: "all", label: "All Projects", image: null },
             ...projects.map((m) => ({
               value: m.id,
               label: m.name,
@@ -133,6 +123,7 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
             })),
           ]}
           value={projectId ?? "all"}
+          onChange={onProjectChange}
         />
       )}
 
@@ -140,16 +131,14 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
         placeholder="Due Date"
         className="h-12 w-full lg:w-auto"
         value={dueDate ? dueDate.toISOString() : ""}
-        onChange={(date) => {
-          setFilters({ dueDate: date ?? null });
-        }}
+        onChange={(date) => setFilters({ dueDate: date ?? null })}
       />
 
-      {filters && (
+      {hasActiveFilters && (
         <Button
           size="lg"
           variant="secondary"
-          className="ml-auto"
+          className="ml-auto items-center"
           onClick={clearFilters}
         >
           <XCircleIcon className="size-4" />

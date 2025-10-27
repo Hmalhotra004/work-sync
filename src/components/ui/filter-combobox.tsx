@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ClassValue } from "clsx";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -11,6 +13,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 
 import {
@@ -18,8 +21,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { ClassValue } from "clsx";
 
 type OptionType = {
   value: string;
@@ -88,7 +89,21 @@ export function FilterCombobox({
           <CommandList>
             <CommandEmpty>No {placeholder?.toLowerCase()} found.</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              <CommandItem
+                key="all"
+                onSelect={() => {
+                  onChange("all");
+                  setOpen(false);
+                }}
+              >
+                <Avatar
+                  name="all"
+                  className="size-6"
+                />
+                All {placeholder}s
+              </CommandItem>
+              <CommandSeparator className="my-1" />
+              {options.slice(1).map((option) => (
                 <CommandItem
                   key={option.value}
                   onSelect={() => {
