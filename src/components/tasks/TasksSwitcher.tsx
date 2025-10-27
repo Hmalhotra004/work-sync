@@ -7,9 +7,10 @@ import { useTasksFilters } from "@/hooks/useTasksFilters";
 import { tabs } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
+import { DataTable } from "./DataTable";
+import { taskColumns } from "./TaskColumns";
 import TaskFilters from "./TaskFilters";
 
 interface Props {
@@ -28,7 +29,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
 
   const { open } = useCreateTaskModal();
 
-  const { data, isLoading: isLoadingTasks } = useQuery(
+  const { data: tasks, isLoading: isLoadingTasks } = useQuery(
     trpc.task.getMany.queryOptions({
       workspaceId,
       projectId,
@@ -83,17 +84,10 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
               value="table"
               className="mt-0"
             >
-              {data?.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-x-4"
-                >
-                  <h1>{p.name}</h1>
-                  <h1>{p.projectId}</h1>
-                  <h1>{p.status}</h1>
-                  <h1>{format(p.dueDate, "PPP")}</h1>
-                </div>
-              ))}
+              <DataTable
+                data={tasks ?? []}
+                columns={taskColumns}
+              />
             </TabsContent>
 
             <TabsContent

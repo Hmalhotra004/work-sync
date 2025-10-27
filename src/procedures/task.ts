@@ -53,7 +53,7 @@ export const taskRouter = createTRPCRouter({
         .select()
         .from(task)
         .where(and(...conditions))
-        .orderBy(desc(task.createdAt), desc(task.name));
+        .orderBy(asc(task.name), desc(task.createdAt));
 
       return tasks;
     }),
