@@ -14,6 +14,26 @@ export type ProjectType = inferRouterOutputs<AppRouter>["project"]["getOne"];
 
 export type TaskType = inferRouterOutputs<AppRouter>["task"]["getOne"];
 
+// export type TaskGetManyType = inferRouterOutputs<AppRouter>["task"]["getMany"];
+export type TaskGetManyType = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  workspaceId: string;
+  description: string | null;
+  status: "Backlog" | "Todo" | "In Progress" | "In Review" | "Done";
+  dueDate: string;
+  position: number;
+  projectId: string | null;
+  assigneeId: string | null;
+  projectName: string | null;
+  projectImage: string | null;
+  assigneeName: string | null;
+  assigneeEmail: string | null;
+  assigneeImage: string | null;
+};
+
 export type MemberRoleType = z.infer<typeof memberRoleSchema>;
 
 export type TaskStatusType = z.infer<typeof taskStatusSchema>;

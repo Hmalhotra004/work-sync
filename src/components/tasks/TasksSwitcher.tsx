@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { DataTable } from "./DataTable";
-import { taskColumns } from "./TaskColumns";
+import { getTaskColumns } from "./TaskColumns";
 import TaskFilters from "./TaskFilters";
 
 interface Props {
@@ -39,6 +39,8 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
       search,
     })
   );
+
+  const taskColumns = getTaskColumns(false);
 
   return (
     <Tabs

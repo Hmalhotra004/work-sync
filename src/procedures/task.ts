@@ -1,7 +1,8 @@
 import { db } from "@/db";
-import { project, task } from "@/db/schema";
+import { project, task, user } from "@/db/schema";
 import { verifyRole } from "@/lib/serverHelpers";
 import { TRPCError } from "@trpc/server";
+import { endOfDay, startOfDay } from "date-fns";
 import { and, asc, desc, eq, gte, ilike, lte } from "drizzle-orm";
 
 import {
@@ -17,7 +18,6 @@ import {
   protectedProcedure,
   taskProcedure,
 } from "@/trpc/init";
-import { endOfDay, startOfDay } from "date-fns";
 
 export const taskRouter = createTRPCRouter({
   getMany: projectProcedure
@@ -50,8 +50,31 @@ export const taskRouter = createTRPCRouter({
       ].filter(Boolean);
 
       const tasks = await db
-        .select()
+        .select({
+          id: task.id,
+          name: task.name,
+          description: task.description,
+          status: task.status,
+          dueDate: task.dueDate,
+          createdAt: task.createdAt,
+          updatedAt: task.updatedAt,
+          position: task.position,
+          workspaceId: task.workspaceId,
+
+          // project details
+          projectId: project.id,
+          projectName: project.name,
+          projectImage: project.image,
+
+          // assignee details
+          assigneeId: user.id,
+          assigneeName: user.name,
+          assigneeEmail: user.email,
+          assigneeImage: user.image,
+        })
         .from(task)
+        .leftJoin(project, eq(task.projectId, project.id))
+        .leftJoin(user, eq(task.assigneeId, user.id))
         .where(and(...conditions))
         .orderBy(asc(task.name), desc(task.createdAt));
 
@@ -130,7 +153,7 @@ export const taskRouter = createTRPCRouter({
             eq(task.workspaceId, workspaceId)
           )
         )
-        .orderBy(asc(task.position));
+        .orderBy(desc(task.position));
 
       const newPosition =
         highestPostionTask.length > 0
