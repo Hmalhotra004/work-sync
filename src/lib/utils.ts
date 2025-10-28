@@ -1,3 +1,4 @@
+import { TaskStatusEnum } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -16,3 +17,41 @@ export function generateInviteCode(length: number): string {
 
   return result;
 }
+
+export const tabs = [
+  {
+    label: "Table",
+    value: "table",
+  },
+  {
+    label: "Kanban",
+    value: "kanban",
+  },
+  {
+    label: "Calender",
+    value: "calender",
+  },
+];
+
+export const TASKSTATUSMAP = [
+  {
+    value: TaskStatusEnum.Backlog,
+    label: "Backlog",
+  },
+  {
+    value: TaskStatusEnum.Todo,
+    label: "Todo",
+  },
+  {
+    value: TaskStatusEnum.In_Progress,
+    label: "In Progress",
+  },
+  {
+    value: TaskStatusEnum.In_Review,
+    label: "In Review",
+  },
+  {
+    value: TaskStatusEnum.Done,
+    label: "Done",
+  },
+];

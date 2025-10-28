@@ -1,6 +1,18 @@
 import { generateInviteCode } from "@/lib/utils";
-import { boolean, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
+
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id")
@@ -73,41 +85,119 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
-export const workspace = pgTable("workspace", {
+export const workspace = pgTable(
+  "workspace",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    name: text("name").notNull(),
+    image: text("image"),
+    inviteCode: text("invite_code")
+      .notNull()
+      .$defaultFn(() => generateInviteCode(6)),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("workspace_user_id_idx").on(table.ownerId),
+    inviteCodeIdx: index("workspace_invite_code_idx").on(table.inviteCode),
+  })
+);
+
+export const memberRole = pgEnum("memberRole", [
+  "Owner",
+  "Admin",
+  "Moderator",
+  "Member",
+]);
+
+export const member = pgTable(
+  "member",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    role: memberRole("role").notNull().default("Member"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    userWorkspaceUnique: unique().on(table.userId, table.workspaceId),
+    userIdIdx: index("member_user_id_idx").on(table.userId),
+    workspaceIdIdx: index("member_workspace_id_idx").on(table.workspaceId),
+  })
+);
+
+export const project = pgTable("project", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => nanoid()),
   name: text("name").notNull(),
   image: text("image"),
-  inviteCode: text("invite_code")
-    .notNull()
-    .$defaultFn(() => generateInviteCode(6)),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
-
-export const memberRole = pgEnum("memberRole", ["admin", "mod", "member"]);
-
-export const member = pgTable("member", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
   workspaceId: text("workspace_id")
     .notNull()
     .references(() => workspace.id, { onDelete: "cascade" }),
-  role: memberRole("role").notNull().default("member"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
 });
+
+export const taskStatus = pgEnum("taskStatus", [
+  "Backlog",
+  "Todo",
+  "In Progress",
+  "In Review",
+  "Done",
+]);
+
+export const task = pgTable(
+  "task",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    name: text("name").notNull(),
+    description: text("description"),
+    status: taskStatus("status").notNull().default("Todo"),
+    dueDate: timestamp("due_date").notNull(),
+    position: integer("position").notNull().default(1000),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    assigneeId: text("assignee_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    positionRange: check(
+      "position_range_check",
+      sql`${table.position} >=1000 AND ${table.position} <= 1000000`
+    ),
+  })
+);

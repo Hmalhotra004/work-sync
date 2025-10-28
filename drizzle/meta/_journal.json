@@ -36,6 +36,48 @@
       "when": 1760002771063,
       "tag": "0004_invite_code",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1760336918722,
+      "tag": "0005_uniyq",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1760349028935,
+      "tag": "0006_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1760357318087,
+      "tag": "0007_onwer_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1760430489874,
+      "tag": "0008_project",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1760515849660,
+      "tag": "0009_tasks",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1760522671522,
+      "tag": "0010_position",
+      "breakpoints": true
     }
   ]
 }

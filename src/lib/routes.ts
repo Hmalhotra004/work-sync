@@ -1,6 +1,5 @@
-import { HrefType } from "@/types";
+import { RouteType } from "@/types";
 import { SettingsIcon, UserIcon } from "lucide-react";
-import { IconType } from "react-icons/lib";
 
 import {
   GoCheckCircle,
@@ -9,17 +8,10 @@ import {
   GoHomeFill,
 } from "react-icons/go";
 
-type RouteType = {
-  label: string;
-  href: HrefType;
-  icon: IconType;
-  activeIcon: IconType;
-}[];
-
-const routes: RouteType = [
+export const routes: RouteType = [
   {
     label: "Home",
-    href: "/",
+    href: "",
     icon: GoHome,
     activeIcon: GoHomeFill,
   },
@@ -37,10 +29,8 @@ const routes: RouteType = [
   },
   {
     label: "Settings",
-    href: "/settings",
+    href: `/settings`,
     icon: SettingsIcon,
     activeIcon: SettingsIcon,
   },
 ];
-
-export default routes;

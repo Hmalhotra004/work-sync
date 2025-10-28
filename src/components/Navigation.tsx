@@ -1,23 +1,28 @@
 "use client";
-import routes from "@/lib/routes";
+import { useWorkspaceId } from "@/hooks/useWorkspaceId";
+import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const Navigation = () => {
   const pathname = usePathname();
+  const workspaceId = useWorkspaceId();
+
+  // todo:hide settings for mod and member
 
   return (
     <ul className="flex flex-col">
       {routes.map((r, idx) => {
-        const href = r.href.toString();
-        const isActive = pathname.endsWith(href);
+        const fullHref = `/workspaces/${workspaceId}${r.href}`;
+        const isActive = pathname === fullHref;
         const Icon = isActive ? r.activeIcon : r.icon;
 
         return (
           <Link
             key={idx.toString()}
-            href={r.href}
+            href={fullHref as Route}
           >
             <div
               className={cn(

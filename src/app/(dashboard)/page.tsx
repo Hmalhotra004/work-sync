@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import HomeView from "@/views/HomeView";
+import { getQueryClient, trpc } from "@/trpc/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -14,16 +14,20 @@ const Home = async () => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  return (
-    <HomeView />
-    // <HydrationBoundary state={dehydrate(queryClient)}>
-    //   <Suspense fallback={<Loader />}>
-    //     {/* TODO:Change error */}
-    //     <ErrorBoundary fallback={<div>error</div>}>
-    //     </ErrorBoundary>
-    //   </Suspense>
-    // </HydrationBoundary>
+  const queryClient = getQueryClient();
+
+  await queryClient.prefetchQuery(trpc.workspace.getMany.queryOptions());
+
+  const workspaces = queryClient.getQueryData(
+    trpc.workspace.getMany.queryKey()
   );
+
+  if (workspaces && workspaces.length > 0) {
+    redirect(`/workspaces/${workspaces[0].id}`);
+  }
+  if (workspaces && workspaces.length === 0) {
+    redirect(`/workspaces/create`);
+  }
 };
 
 export default Home;
