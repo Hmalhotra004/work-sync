@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { member, project, workspace } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { workspaceIdSchema } from "@/schemas/workspace/schema";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
@@ -38,19 +39,16 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   return next({ ctx: { ...ctx, auth: session } });
 });
 
-export const projectProcedure = protectedProcedure
-  .input(
-    z.object({
-      workspaceId: z.string().min(1, { error: "WorkspaceId is required" }),
-    })
-  )
+export const workspaceProcedure = protectedProcedure
+  .input(workspaceIdSchema)
   .use(async ({ ctx, next, input }) => {
     const { workspaceId } = input;
 
     const [existingWorkspace] = await db
-      .select()
+      .select({ id: workspace.id })
       .from(workspace)
-      .where(eq(workspace.id, workspaceId));
+      .where(eq(workspace.id, workspaceId))
+      .limit(1);
 
     if (!existingWorkspace) {
       throw new TRPCError({
@@ -80,7 +78,7 @@ export const projectProcedure = protectedProcedure
     return next({ ctx: { ...ctx, role: memberRecord.role } });
   });
 
-export const taskProcedure = projectProcedure
+export const projectProcedure = workspaceProcedure
   .input(
     z.object({
       projectId: z.string().min(1, { error: "ProjectId is required" }),
