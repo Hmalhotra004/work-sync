@@ -54,14 +54,14 @@ export const updateTaskSchema = createUpdateSchema(task)
     updatedAt: true,
   })
   .extend({
-    id: z.string().min(1, { error: "id is required" }),
-    name: z.string().min(1, { error: "Project name is required" }),
-    description: z.string().optional(),
+    id: z.string().trim().min(1, { error: "id is required" }),
+    name: z.string().trim().min(1, { error: "Project name is required" }),
+    description: z.string().trim().optional(),
     status: taskStatusSchema,
     dueDate: z.date({ error: "Due Date is required" }),
-    workspaceId: z.string().min(1, { error: "workspaceId is required" }),
-    projectId: z.string().min(1, { error: "projectId is required" }),
-    assigneeId: z.string().min(1, { error: "assigneeId is required" }),
+    workspaceId: z.string().trim().min(1, { error: "workspaceId is required" }),
+    projectId: z.string().trim().min(1, { error: "projectId is required" }),
+    assigneeId: z.string().trim().min(1, { error: "assigneeId is required" }),
   });
 
 export const taskSelectSchema = createSelectSchema(task);
