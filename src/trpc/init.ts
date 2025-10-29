@@ -1,7 +1,8 @@
 import { db } from "@/db";
-import { member, project, workspace } from "@/db/schema";
+import { member, project, task, workspace } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { projectIdSchema } from "@/schemas/project/schema";
+import { taskIdSchema } from "@/schemas/task/schema";
 import { workspaceIdSchema } from "@/schemas/workspace/schema";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -95,6 +96,33 @@ export const projectProcedure = workspaceProcedure
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Project not found",
+      });
+    }
+
+    return next();
+  });
+
+export const taskProcedure = projectProcedure
+  .input(taskIdSchema)
+  .use(async ({ next, input }) => {
+    const { projectId, taskId, workspaceId } = input;
+
+    const [existingTask] = await db
+      .select({ id: task.id })
+      .from(task)
+      .where(
+        and(
+          eq(task.id, taskId),
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+
+    if (!existingTask) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Task not found",
       });
     }
 

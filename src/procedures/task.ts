@@ -7,15 +7,14 @@ import { and, asc, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import {
   createTaskSchema,
   taskGetManySchema,
-  taskGetOneSchema,
-  taskIdSchema,
   updateTaskSchema,
 } from "@/schemas/task/schema";
 
-import { hasRolePermission } from "@/lib/roleHierarchy";
+import { verifyRole } from "@/lib/serverHelpers";
 import {
   createTRPCRouter,
   projectProcedure,
+  taskProcedure,
   workspaceProcedure,
 } from "@/trpc/init";
 
@@ -81,7 +80,7 @@ export const taskRouter = createTRPCRouter({
       return tasks;
     }),
 
-  getOne: projectProcedure.input(taskGetOneSchema).query(async ({ input }) => {
+  getOne: taskProcedure.query(async ({ input }) => {
     const { projectId, workspaceId, taskId } = input;
 
     const [existingTask] = await db
@@ -89,9 +88,9 @@ export const taskRouter = createTRPCRouter({
       .from(task)
       .where(
         and(
-          eq(task.workspaceId, workspaceId),
+          eq(task.id, taskId),
           eq(task.projectId, projectId),
-          eq(task.id, taskId)
+          eq(task.workspaceId, workspaceId)
         )
       )
       .limit(1);
@@ -128,25 +127,7 @@ export const taskRouter = createTRPCRouter({
         });
       }
 
-      if (!hasRolePermission(ctx.role, "Moderator")) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `Requires Moderator role or higher`,
-        });
-      }
-
-      const [existingProject] = await db
-        .select()
-        .from(project)
-        .where(eq(project.id, projectId))
-        .limit(1);
-
-      if (!existingProject) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Project not found",
-        });
-      }
+      verifyRole(ctx.role, "Moderator");
 
       const highestPostionTask = await db
         .select()
@@ -182,43 +163,119 @@ export const taskRouter = createTRPCRouter({
       return createdTask;
     }),
 
-  update: projectProcedure
+  update: taskProcedure
     .input(updateTaskSchema)
     .mutation(async ({ ctx, input }) => {
       const {
         id,
         name,
         description,
-        dueDate,
+        dueDate: date,
         status,
         workspaceId,
         projectId,
         assigneeId,
       } = input;
-    }),
 
-  delete: projectProcedure
-    .input(taskIdSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { taskId, projectId, workspaceId } = input;
+      verifyRole(ctx.role, "Moderator");
 
-      if (ctx.role === "Member") {
+      const dueDate = new Date(date);
+
+      if (isNaN(dueDate.getTime())) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: `Requires Moderator role or higher`,
+          code: "BAD_REQUEST",
+          message: "Invalid Date",
         });
       }
 
-      await db
-        .delete(task)
+      const [existingTask] = await db
+        .select()
+        .from(task)
         .where(
           and(
-            eq(task.id, taskId),
+            eq(task.id, id),
             eq(task.projectId, projectId),
             eq(task.workspaceId, workspaceId)
           )
-        );
+        )
+        .limit(1);
 
-      return { success: true };
+      if (existingTask.status === status) {
+        const [updatedTask] = await db
+          .update(task)
+          .set({
+            name,
+            description,
+            assigneeId,
+            dueDate,
+            status,
+          })
+          .where(
+            and(
+              eq(task.id, id),
+              eq(task.projectId, projectId),
+              eq(task.workspaceId, workspaceId)
+            )
+          )
+          .returning();
+
+        return updatedTask;
+      } else {
+        const highestPostionTask = await db
+          .select()
+          .from(task)
+          .where(
+            and(
+              eq(task.status, status),
+              eq(task.projectId, projectId),
+              eq(task.workspaceId, workspaceId)
+            )
+          )
+          .orderBy(desc(task.position));
+
+        const newPosition =
+          highestPostionTask.length > 0
+            ? highestPostionTask[0].position + 1000
+            : 1000;
+
+        const [updatedTask] = await db
+          .update(task)
+          .set({
+            name,
+            description,
+            assigneeId,
+            dueDate,
+            status,
+            position: newPosition,
+          })
+          .where(
+            and(
+              eq(task.id, id),
+              eq(task.projectId, projectId),
+              eq(task.workspaceId, workspaceId)
+            )
+          )
+          .returning();
+
+        return updatedTask;
+      }
     }),
+
+  delete: taskProcedure.mutation(async ({ ctx, input }) => {
+    const { taskId, projectId, workspaceId } = input;
+
+    verifyRole(ctx.role, "Moderator");
+
+    await db
+      .delete(task)
+      .where(
+        and(
+          eq(task.id, taskId),
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId)
+        )
+      );
+
+    return { success: true };
+  }),
 });

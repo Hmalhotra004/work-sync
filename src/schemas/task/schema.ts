@@ -1,11 +1,7 @@
 import { task } from "@/db/schema";
 import z from "zod";
 
-import {
-  createInsertSchema,
-  createSelectSchema,
-  createUpdateSchema,
-} from "drizzle-zod";
+import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
 export const taskStatusSchema = z.enum(
   ["Backlog", "Todo", "In Progress", "In Review", "Done"],
@@ -24,10 +20,6 @@ export const taskGetManySchema = z.object({
     .optional(),
   assigneeId: z.string().trim().optional(),
   projectId: z.string().trim().optional(),
-});
-
-export const taskGetOneSchema = z.object({
-  taskId: z.string().trim().min(1, { error: "TaskId is requried" }),
 });
 
 export const createTaskSchema = createInsertSchema(task)
@@ -63,5 +55,3 @@ export const updateTaskSchema = createUpdateSchema(task)
     projectId: z.string().trim().min(1, { error: "projectId is required" }),
     assigneeId: z.string().trim().min(1, { error: "assigneeId is required" }),
   });
-
-export const taskSelectSchema = createSelectSchema(task);
