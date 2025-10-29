@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { project } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
-import { deleteCloudinaryImage, verifyRole } from "@/lib/serverHelpers";
+import { deleteCloudinaryImage } from "@/lib/serverHelpers";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
@@ -11,14 +11,11 @@ import {
   updateProjectSchema,
 } from "@/schemas/project/schema";
 
-import {
-  createTRPCRouter,
-  projectProcedure,
-  protectedProcedure,
-} from "@/trpc/init";
+import { hasRolePermission } from "@/lib/roleHierarchy";
+import { createTRPCRouter, workspaceProcedure } from "@/trpc/init";
 
 export const projectRouter = createTRPCRouter({
-  getMany: projectProcedure.query(async ({ input }) => {
+  getMany: workspaceProcedure.query(async ({ input }) => {
     const { workspaceId } = input;
 
     const projects = await db
@@ -29,7 +26,7 @@ export const projectRouter = createTRPCRouter({
     return projects;
   }),
 
-  getOne: projectProcedure
+  getOne: workspaceProcedure
     .input(projectNWorkspaceIdSchema)
     .query(async ({ input }) => {
       const { projectId, workspaceId } = input;
@@ -45,12 +42,17 @@ export const projectRouter = createTRPCRouter({
       return existingProject;
     }),
 
-  create: projectProcedure
+  create: workspaceProcedure
     .input(createProjectSchema)
     .mutation(async ({ ctx, input }) => {
       const { name, image, workspaceId } = input;
 
-      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
+      if (!hasRolePermission(ctx.role, "Admin")) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Requires Admin role or higher`,
+        });
+      }
 
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
@@ -67,12 +69,17 @@ export const projectRouter = createTRPCRouter({
       return createdProject;
     }),
 
-  update: protectedProcedure
+  update: workspaceProcedure
     .input(updateProjectSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, image, name, workspaceId } = input;
+      const { id, image, name } = input;
 
-      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
+      if (!hasRolePermission(ctx.role, "Admin")) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Requires Admin role or higher`,
+        });
+      }
 
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
@@ -100,12 +107,17 @@ export const projectRouter = createTRPCRouter({
       return updatedProject;
     }),
 
-  deleteProjectImage: projectProcedure
+  deleteProjectImage: workspaceProcedure
     .input(projectNWorkspaceIdSchema)
     .mutation(async ({ ctx, input }) => {
-      const { projectId, workspaceId } = input;
+      const { projectId } = input;
 
-      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
+      if (!hasRolePermission(ctx.role, "Admin")) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Requires Admin role or higher`,
+        });
+      }
 
       const [projectToUpdate] = await db
         .select({ image: project.image })
@@ -142,12 +154,17 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  delete: protectedProcedure
+  delete: workspaceProcedure
     .input(projectNWorkspaceIdSchema)
     .mutation(async ({ ctx, input }) => {
-      const { projectId, workspaceId } = input;
+      const { projectId } = input;
 
-      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
+      if (!hasRolePermission(ctx.role, "Admin")) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Requires Admin role or higher`,
+        });
+      }
 
       const [projectToDelete] = await db
         .select({ id: project.id, image: project.image })
