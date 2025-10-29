@@ -3,8 +3,10 @@
 import DottedSeparator from "@/components/DottedSeparator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
+import MemberAvatar from "@/components/member/MemberAvatar";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import DatePicker from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,8 +38,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import MemberAvatar from "../member/MemberAvatar";
-import { Combobox } from "../ui/combobox";
 
 interface Props {
   onSuccess?: () => void;
@@ -65,7 +65,9 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     defaultValues: {
       name: initialValues?.name ?? "",
       description: initialValues?.description ?? "",
-      dueDate: initialValues?.dueDate ?? "",
+      dueDate: initialValues?.dueDate
+        ? new Date(initialValues.dueDate).toISOString()
+        : "",
       status: initialValues?.status ?? TaskStatusEnum.Todo,
       assigneeId: initialValues?.assigneeId ?? "",
       projectId: initialValues?.projectId ?? projectId ?? "",
@@ -91,20 +93,20 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     })
   );
 
-  // TODO:Update
   const updateTask = useMutation(
-    trpc.project.update.mutationOptions({
+    trpc.task.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(
-          trpc.project.getMany.queryOptions({ workspaceId })
+          trpc.task.getMany.queryOptions({ workspaceId, projectId })
         );
         await queryClient.invalidateQueries(
-          trpc.project.getOne.queryOptions({
-            projectId: initialValues!.id!,
-            workspaceId,
+          trpc.task.getOne.queryOptions({
+            taskId: initialValues!.id,
+            projectId: initialValues!.projectId!,
+            workspaceId: initialValues!.workspaceId!,
           })
         );
-        toast.success("Project Updated");
+        toast.success("Task Updated");
         onSuccess?.();
       },
       onError: (error) => toast.error(error.message),
@@ -127,9 +129,14 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     if (isEdit) {
       await updateTask.mutateAsync({
         id: initialValues?.id,
+        taskId: initialValues?.id,
         name: values.name,
-        image: "",
-        workspaceId,
+        description: values.description,
+        dueDate: values.dueDate,
+        status: values.status,
+        assigneeId: values.assigneeId,
+        workspaceId: initialValues.workspaceId,
+        projectId: initialValues.projectId,
       });
     } else {
       await createTask.mutateAsync({
@@ -185,7 +192,10 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
               <FormItem>
                 <FormLabel>Due Date</FormLabel>
                 <FormControl>
-                  <DatePicker {...field} />
+                  <DatePicker
+                    {...field}
+                    disabled={isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -203,7 +213,10 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                   onValueChange={field.onChange}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      className="w-full"
+                      disabled={isPending}
+                    >
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                   </FormControl>
@@ -242,6 +255,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                     {...field}
                     placeholder="Assignee"
                     Avatar={MemberAvatar}
+                    disabled={isPending}
                     options={members.map((m) => ({
                       value: m.userId,
                       label: m.name,
@@ -265,7 +279,10 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                   onValueChange={field.onChange}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      className="w-full"
+                      disabled={isPending}
+                    >
                       <SelectValue placeholder="Select Project" />
                     </SelectTrigger>
                   </FormControl>

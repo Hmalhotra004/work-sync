@@ -32,6 +32,7 @@ interface Props {
   value: string | undefined;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled: boolean;
   Avatar: React.ComponentType<{
     name: string;
     image?: string;
@@ -46,6 +47,7 @@ export function Combobox({
   onChange,
   value,
   Avatar,
+  disabled,
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -56,7 +58,10 @@ export function Combobox({
       open={open}
       onOpenChange={setOpen}
     >
-      <PopoverTrigger asChild>
+      <PopoverTrigger
+        asChild
+        disabled={disabled}
+      >
         <Button
           variant="outline"
           role="combobox"

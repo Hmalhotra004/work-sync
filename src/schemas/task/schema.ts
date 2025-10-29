@@ -47,10 +47,10 @@ export const updateTaskSchema = createUpdateSchema(task)
   })
   .extend({
     id: z.string().trim().min(1, { error: "id is required" }),
-    name: z.string().trim().min(1, { error: "Project name is required" }),
+    name: z.string().trim().min(1, { error: "Task name is required" }),
     description: z.string().trim().optional(),
     status: taskStatusSchema,
-    dueDate: z.date({ error: "Due Date is required" }),
+    dueDate: z.string().trim().min(1, { error: "Due Date is required" }),
     workspaceId: z.string().trim().min(1, { error: "workspaceId is required" }),
     projectId: z.string().trim().min(1, { error: "projectId is required" }),
     assigneeId: z.string().trim().min(1, { error: "assigneeId is required" }),

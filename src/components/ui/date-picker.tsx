@@ -13,12 +13,22 @@ interface Props {
   onChange: (date: string) => void;
   className?: ClassValue;
   placeholder?: string;
+  disabled: boolean;
 }
 
-const DatePicker = ({ onChange, value, className, placeholder }: Props) => {
+const DatePicker = ({
+  disabled,
+  onChange,
+  value,
+  className,
+  placeholder,
+}: Props) => {
   return (
     <Popover>
-      <PopoverTrigger asChild>
+      <PopoverTrigger
+        asChild
+        disabled={disabled}
+      >
         <Button
           variant="outline"
           size="lg"

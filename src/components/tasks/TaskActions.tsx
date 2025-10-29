@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useProjectId } from "@/hooks/useProjectId";
 
 interface Props {
   id: string;
@@ -26,6 +27,7 @@ const TaskActions = ({ children, id, projectId }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const workspaceId = useWorkspaceId();
+  const ProjectIdAsParam = useProjectId();
   const router = useRouter();
 
   const [ConfirmDeleteTaskDialog, confirm] = useConfirm(
@@ -47,7 +49,13 @@ const TaskActions = ({ children, id, projectId }: Props) => {
   );
 
   function onOpenTask() {
-    router.push(`/workspaces/${workspaceId}/task/${id}`);
+    router.push(`/workspaces/${workspaceId}/projects/${projectId}/task/${id}`);
+  }
+
+  function onOpenEditTask() {
+    router.push(
+      `/workspaces/${workspaceId}/projects/${projectId}/task/${id}/edit`
+    );
   }
 
   function onOpenProject() {
@@ -82,16 +90,18 @@ const TaskActions = ({ children, id, projectId }: Props) => {
               Task Details
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={onOpenProject}
-              className="font-medium p-[10px]"
-            >
-              <ExternalLinkIcon className="size-4 mr-2 stroke-2" />
-              Open Project
-            </DropdownMenuItem>
+            {!ProjectIdAsParam && (
+              <DropdownMenuItem
+                onClick={onOpenProject}
+                className="font-medium p-[10px]"
+              >
+                <ExternalLinkIcon className="size-4 mr-2 stroke-2" />
+                Open Project
+              </DropdownMenuItem>
+            )}
 
             <DropdownMenuItem
-              onClick={() => {}}
+              onClick={onOpenEditTask}
               className="font-medium p-[10px]"
             >
               <PencilIcon className="size-4 mr-2 stroke-2" />
