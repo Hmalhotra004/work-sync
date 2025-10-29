@@ -241,6 +241,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
         <div
           className={cn(
             "grid grid-cols-2 gap-x-4",
+            isEdit && "grid-cols-1 w-full",
             isMobile && "flex flex-col gap-y-4 w-full"
           )}
         >
@@ -268,47 +269,49 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
             )}
           />
 
-          <FormField
-            name="projectId"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Project</FormLabel>
-                <Select
-                  defaultValue={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger
-                      className="w-full"
-                      disabled={isPending}
-                    >
-                      <SelectValue placeholder="Select Project" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <FormMessage />
-
-                  <SelectContent>
-                    {projects.map((p) => (
-                      <SelectItem
-                        key={p.id}
-                        value={p.id}
+          {!isEdit && (
+            <FormField
+              name="projectId"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project</FormLabel>
+                  <Select
+                    defaultValue={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger
+                        className="w-full"
+                        disabled={isPending}
                       >
-                        <div className="flex items-center gap-x-2">
-                          <ProjectAvatar
-                            name={p.name}
-                            image={p.image ?? undefined}
-                            className="size-6"
-                          />
-                          {p.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
+                        <SelectValue placeholder="Select Project" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <FormMessage />
+
+                    <SelectContent>
+                      {projects.map((p) => (
+                        <SelectItem
+                          key={p.id}
+                          value={p.id}
+                        >
+                          <div className="flex items-center gap-x-2">
+                            <ProjectAvatar
+                              name={p.name}
+                              image={p.image ?? undefined}
+                              className="size-6"
+                            />
+                            {p.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <FormField
