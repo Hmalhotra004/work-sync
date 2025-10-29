@@ -1,21 +1,10 @@
 "use client";
 
 import DottedSeparator from "@/components/DottedSeparator";
-import MemberAvatar from "@/components/member/MemberAvatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import Member from "@/components/member/Member";
+import MemberList from "@/components/member/MemberList";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { MoreVerticalIcon } from "lucide-react";
-import { Fragment } from "react";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface Props {
   workspaceId: string;
@@ -25,86 +14,60 @@ interface Props {
 const WorkspaceMembersView = ({ workspaceId, userId }: Props) => {
   const trpc = useTRPC();
 
-  const { data } = useSuspenseQuery(
+  const { data: members } = useSuspenseQuery(
     trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
   );
 
-  async function handleRoleChange(
-    memberId: string,
-    role: "admin" | "mod" | "member"
-  ) {}
+  const owners = members.filter((m) => m.role === "Owner");
+  const admins = members.filter((m) => m.role === "Admin");
+  const mods = members.filter((m) => m.role === "Moderator");
+  const mems = members.filter((m) => m.role === "Member");
 
-  async function handleRemove(memberId: string) {}
-
-  // TODO:Member role managerment system
+  const owner = owners[0];
 
   return (
     <div className="w-full">
-      <Card className="w-full border-none shadow-none">
-        <CardHeader className="flex flex-row items-center gap-x-4 space-y-0 px-7">
-          <CardTitle className="text-xl font-bold">Members List</CardTitle>
-        </CardHeader>
+      <div className="flex flex-col gap-y-6">
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold mb-0.5">Owner</h1>
 
-        <div className="px-7">
-          <DottedSeparator />
+          <DottedSeparator
+            className="mb-2"
+            gapSize="4px"
+            dotSize="3px"
+          />
+
+          <Member
+            member={owner}
+            isNotLast={false}
+            userId={userId}
+          />
         </div>
 
-        <CardContent className="px-7">
-          {data.members.map((m, idx) => {
-            return (
-              <Fragment key={m.memberId}>
-                <div className="flex items-center gap-[9px]">
-                  <MemberAvatar
-                    name={m.name}
-                    image={m.image ?? undefined}
-                    className="size-10"
-                    fallbackClassName="text-lg"
-                  />
+        {admins.length > 0 && (
+          <MemberList
+            data={admins}
+            label="Admins"
+            userId={userId}
+          />
+        )}
 
-                  <div className="flex flex-col">
-                    <p className="text-sm font-medium">{m.name}</p>
-                    <p className="text-xs text-muted-foreground">{m.email}</p>
-                  </div>
+        {mods.length > 0 && (
+          <MemberList
+            data={mods}
+            label="Moderators"
+            userId={userId}
+          />
+        )}
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="ml-auto"
-                      >
-                        <MoreVerticalIcon className="size-4 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent
-                      side="bottom"
-                      align="end"
-                    >
-                      <DropdownMenuItem
-                        className="font-medium cursor-pointer"
-                        onClick={() => handleRoleChange(m.memberId, "mod")}
-                      >
-                        Set as Moderator
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="font-medium cursor-pointer text-rose-500"
-                        onClick={() => handleRemove(m.memberId)}
-                      >
-                        Remove {m.name}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {idx < data.pagination.total - 1 && (
-                  <Separator className="my-3" />
-                )}
-              </Fragment>
-            );
-          })}
-        </CardContent>
-      </Card>
+        {mems.length > 0 && (
+          <MemberList
+            data={mems}
+            label="Members"
+            userId={userId}
+          />
+        )}
+      </div>
     </div>
   );
 };

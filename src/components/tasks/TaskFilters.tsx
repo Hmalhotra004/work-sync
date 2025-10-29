@@ -99,7 +99,7 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
         placeholder="Assignee"
         options={[
           { value: "all", label: "All Assignees", image: null },
-          ...members.members.map((m) => ({
+          ...members.map((m) => ({
             value: m.userId,
             label: m.name,
             image: m.image,

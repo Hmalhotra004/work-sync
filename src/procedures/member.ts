@@ -1,84 +1,37 @@
 import { db } from "@/db";
 import { member, user, workspace } from "@/db/schema";
 import { verifyRole } from "@/lib/serverHelpers";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  workspaceProcedure,
-} from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import z from "zod";
 
+import { createTRPCRouter, workspaceProcedure } from "@/trpc/init";
+
 export const memberRouter = createTRPCRouter({
-  getWorkspaceMembers: protectedProcedure
-    .input(
-      z.object({
-        workspaceId: z.string(),
-        limit: z.number().min(1).max(100).default(50).optional(),
-        offset: z.number().min(0).default(0).optional(),
+  getWorkspaceMembers: workspaceProcedure.query(async ({ input }) => {
+    const { workspaceId } = input;
+
+    const members = await db
+      .select({
+        memberId: member.id,
+        userId: member.userId,
+        workspaceId: member.workspaceId,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        role: member.role,
+        isOwner: sql<boolean>`${workspace.ownerId} = ${member.userId}`,
+        createdAt: member.createdAt,
+        updatedAt: member.updatedAt,
       })
-    )
-    .query(async ({ ctx, input }) => {
-      const { workspaceId, limit = 50, offset = 0 } = input;
+      .from(member)
+      .innerJoin(user, eq(user.id, member.userId))
+      .innerJoin(workspace, eq(workspace.id, member.workspaceId))
+      .where(eq(member.workspaceId, workspaceId))
+      .orderBy(member.createdAt);
 
-      // Verify user is a member of the workspace
-      const [membership] = await db
-        .select({ role: member.role })
-        .from(member)
-        .where(
-          and(
-            eq(member.workspaceId, workspaceId),
-            eq(member.userId, ctx.auth.user.id)
-          )
-        )
-        .limit(1);
-
-      if (!membership) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Not a member of this workspace",
-        });
-      }
-
-      // Get total count for pagination
-      const [{ count }] = await db
-        .select({ count: sql<number>`cast(count(*) as int)` })
-        .from(member)
-        .where(eq(member.workspaceId, workspaceId));
-
-      // Fetch members with user details
-      const members = await db
-        .select({
-          memberId: member.id,
-          userId: member.userId,
-          workspaceId: member.workspaceId,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          role: member.role,
-          isOwner: sql<boolean>`${workspace.ownerId} = ${member.userId}`,
-          createdAt: member.createdAt,
-          updatedAt: member.updatedAt,
-        })
-        .from(member)
-        .innerJoin(user, eq(user.id, member.userId))
-        .innerJoin(workspace, eq(workspace.id, member.workspaceId))
-        .where(eq(member.workspaceId, workspaceId))
-        .orderBy(member.createdAt)
-        .limit(limit)
-        .offset(offset);
-
-      return {
-        members,
-        pagination: {
-          total: count,
-          limit,
-          offset,
-          hasMore: offset + limit < count,
-        },
-      };
-    }),
+    return members;
+  }),
 
   removeMember: workspaceProcedure
     .input(

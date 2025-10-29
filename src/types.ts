@@ -36,6 +36,19 @@ export type TaskGetManyType = {
 
 export type MemberRoleType = z.infer<typeof memberRoleSchema>;
 
+export type MemberType = {
+  memberId: string;
+  userId: string;
+  workspaceId: string;
+  name: string;
+  email: string;
+  image: string | null;
+  role: "Owner" | "Admin" | "Moderator" | "Member";
+  isOwner: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type TaskStatusType = z.infer<typeof taskStatusSchema>;
 
 export enum TaskStatusEnum {

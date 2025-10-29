@@ -242,7 +242,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                     {...field}
                     placeholder="Assignee"
                     Avatar={MemberAvatar}
-                    options={members.members.map((m) => ({
+                    options={members.map((m) => ({
                       value: m.userId,
                       label: m.name,
                       image: m.image,
