@@ -2,10 +2,15 @@ import { db } from "@/db";
 import { member, workspace } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
 import { generateInviteCode } from "@/lib/utils";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import z from "zod";
+
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  workspaceProcedure,
+} from "@/trpc/init";
 
 import {
   deleteCloudinaryImage,
@@ -40,41 +45,36 @@ export const workspaceRouter = createTRPCRouter({
     return userWorkspaces;
   }),
 
-  getOne: protectedProcedure
-    .input(workspaceIdSchema)
-    .query(async ({ ctx, input }) => {
-      const { workspaceId } = input;
+  getOne: workspaceProcedure.query(async ({ ctx, input }) => {
+    const { workspaceId } = input;
 
-      const [userWorkspace] = await db
-        .select({
-          id: workspace.id,
-          name: workspace.name,
-          image: workspace.image,
-          inviteCode: workspace.inviteCode,
-          ownerId: workspace.ownerId,
-          role: member.role,
-          createdAt: workspace.createdAt,
-          updatedAt: workspace.updatedAt,
-        })
-        .from(workspace)
-        .innerJoin(member, eq(member.workspaceId, workspace.id))
-        .where(
-          and(
-            eq(workspace.id, workspaceId),
-            eq(member.userId, ctx.auth.user.id)
-          )
-        )
-        .limit(1);
+    const [userWorkspace] = await db
+      .select({
+        id: workspace.id,
+        name: workspace.name,
+        image: workspace.image,
+        inviteCode: workspace.inviteCode,
+        ownerId: workspace.ownerId,
+        role: member.role,
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
+      })
+      .from(workspace)
+      .innerJoin(member, eq(member.workspaceId, workspace.id))
+      .where(
+        and(eq(workspace.id, workspaceId), eq(member.userId, ctx.auth.user.id))
+      )
+      .limit(1);
 
-      if (!userWorkspace) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
-        });
-      }
+    if (!userWorkspace) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      });
+    }
 
-      return userWorkspace;
-    }),
+    return userWorkspace;
+  }),
 
   create: protectedProcedure
     .input(createWorkspaceSchema)
@@ -107,12 +107,12 @@ export const workspaceRouter = createTRPCRouter({
       return result;
     }),
 
-  update: protectedProcedure
+  update: workspaceProcedure
     .input(updateWorkspaceSchema)
     .mutation(async ({ ctx, input }) => {
       const { id, image, name } = input;
 
-      await verifyExactRole(id, ctx.auth.user.id, "Owner");
+      verifyExactRole(ctx.role, "Owner");
 
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
@@ -140,85 +140,81 @@ export const workspaceRouter = createTRPCRouter({
       return updatedWorkspace;
     }),
 
-  deleteWorkspaceImage: protectedProcedure
-    .input(workspaceIdSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = input;
+  deleteWorkspaceImage: workspaceProcedure.mutation(async ({ ctx, input }) => {
+    const { workspaceId } = input;
 
-      await verifyExactRole(workspaceId, ctx.auth.user.id, "Owner");
+    verifyExactRole(ctx.role, "Owner");
 
-      const [workspaceToUpdate] = await db
-        .select({ image: workspace.image })
-        .from(workspace)
-        .where(eq(workspace.id, workspaceId))
-        .limit(1);
+    const [workspaceToUpdate] = await db
+      .select({ image: workspace.image })
+      .from(workspace)
+      .where(eq(workspace.id, workspaceId))
+      .limit(1);
 
-      if (!workspaceToUpdate) {
+    if (!workspaceToUpdate) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      });
+    }
+
+    // Delete image from Cloudinary if exists
+    if (workspaceToUpdate.image) {
+      try {
+        await deleteCloudinaryImage(workspaceToUpdate.image);
+      } catch (err) {
+        console.error("Failed to delete image from Cloudinary:", err);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete Workspace",
         });
       }
+    }
 
-      // Delete image from Cloudinary if exists
-      if (workspaceToUpdate.image) {
-        try {
-          await deleteCloudinaryImage(workspaceToUpdate.image);
-        } catch (err) {
-          console.error("Failed to delete image from Cloudinary:", err);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to delete Workspace",
-          });
-        }
-      }
+    // Update database to remove image reference
+    await db
+      .update(workspace)
+      .set({ image: null })
+      .where(eq(workspace.id, workspaceId));
 
-      // Update database to remove image reference
-      await db
-        .update(workspace)
-        .set({ image: null })
-        .where(eq(workspace.id, workspaceId));
+    return { success: true };
+  }),
 
-      return { success: true };
-    }),
+  delete: workspaceProcedure.mutation(async ({ ctx, input }) => {
+    const { workspaceId } = input;
 
-  delete: protectedProcedure
-    .input(workspaceIdSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = input;
+    verifyExactRole(ctx.role, "Owner");
 
-      await verifyExactRole(workspaceId, ctx.auth.user.id, "Owner");
+    const [workspaceToDelete] = await db
+      .select({ id: workspace.id, image: workspace.image })
+      .from(workspace)
+      .where(eq(workspace.id, workspaceId))
+      .limit(1);
 
-      const [workspaceToDelete] = await db
-        .select({ id: workspace.id, image: workspace.image })
-        .from(workspace)
-        .where(eq(workspace.id, workspaceId))
-        .limit(1);
+    if (!workspaceToDelete) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      });
+    }
 
-      if (!workspaceToDelete) {
+    // Delete image from Cloudinary if exists (before deleting workspace)
+    if (workspaceToDelete.image) {
+      try {
+        await deleteCloudinaryImage(workspaceToDelete.image);
+      } catch (err) {
+        console.error("Failed to delete image from Cloudinary:", err);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete Workspace",
         });
       }
+    }
 
-      // Delete image from Cloudinary if exists (before deleting workspace)
-      if (workspaceToDelete.image) {
-        try {
-          await deleteCloudinaryImage(workspaceToDelete.image);
-        } catch (err) {
-          console.error("Failed to delete image from Cloudinary:", err);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to delete Workspace",
-          });
-        }
-      }
+    await db.delete(workspace).where(eq(workspace.id, workspaceToDelete.id));
 
-      await db.delete(workspace).where(eq(workspace.id, workspaceToDelete.id));
-
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 
   join: protectedProcedure
     .input(
@@ -302,20 +298,17 @@ export const workspaceRouter = createTRPCRouter({
       return workspaceInfo;
     }),
 
-  resetInviteCode: protectedProcedure
-    .input(workspaceIdSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { workspaceId } = input;
+  resetInviteCode: workspaceProcedure.mutation(async ({ ctx, input }) => {
+    const { workspaceId } = input;
 
-      // Verify admin role
-      await verifyRole(workspaceId, ctx.auth.user.id, "Admin");
+    verifyRole(ctx.role, "Admin");
 
-      const [updatedWorkspace] = await db
-        .update(workspace)
-        .set({ inviteCode: generateInviteCode(6) })
-        .where(eq(workspace.id, workspaceId))
-        .returning();
+    const [updatedWorkspace] = await db
+      .update(workspace)
+      .set({ inviteCode: generateInviteCode(6) })
+      .where(eq(workspace.id, workspaceId))
+      .returning();
 
-      return updatedWorkspace;
-    }),
+    return updatedWorkspace;
+  }),
 });

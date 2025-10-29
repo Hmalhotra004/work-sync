@@ -170,6 +170,7 @@ const WorkspaceForm = ({ onCancel, initialValues, onSuccess }: Props) => {
           id: initialValues?.id,
           name: values.name,
           image: imageUrl ?? undefined,
+          workspaceId: initialValues.id,
         });
       } else {
         await createWorkspace.mutateAsync({

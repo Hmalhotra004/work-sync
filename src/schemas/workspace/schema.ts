@@ -10,7 +10,7 @@ export const memberRoleSchema = z.enum([
 ]);
 
 export const workspaceIdSchema = z.object({
-  workspaceId: z.string().min(1, { error: "WorkspaceId is required" }),
+  workspaceId: z.string().trim().min(1, { error: "WorkspaceId is required" }),
 });
 
 export const createWorkspaceSchema = createInsertSchema(workspace)
@@ -22,8 +22,8 @@ export const createWorkspaceSchema = createInsertSchema(workspace)
     inviteCode: true,
   })
   .extend({
-    name: z.string().min(1, { error: "Workspace name is required" }),
-    image: z.url().optional().nullable(),
+    name: z.string().trim().min(1, { error: "Workspace name is required" }),
+    image: z.url().trim().optional().nullable(),
   });
 
 export const updateWorkspaceSchema = createUpdateSchema(workspace)
@@ -34,7 +34,11 @@ export const updateWorkspaceSchema = createUpdateSchema(workspace)
     inviteCode: true,
   })
   .extend({
-    id: z.string().min(1, { error: "id is required" }),
-    name: z.string().min(1, { error: "Workspace name is required" }).optional(),
-    image: z.url().optional(),
+    id: z.string().trim().min(1, { error: "id is required" }),
+    name: z
+      .string()
+      .trim()
+      .min(1, { error: "Workspace name is required" })
+      .optional(),
+    image: z.url().trim().optional(),
   });
