@@ -9,6 +9,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
+import DataKanban from "./DataKanban";
 import { DataTable } from "./DataTable";
 import { getTaskColumns } from "./TaskColumns";
 import TaskFilters from "./TaskFilters";
@@ -96,7 +97,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
               value="kanban"
               className="mt-0"
             >
-              kanban
+              <DataKanban data={tasks ?? []} />
             </TabsContent>
 
             <TabsContent
