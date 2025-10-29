@@ -27,6 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useProjectId } from "@/hooks/useProjectId";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
 
 interface Props {
@@ -40,6 +41,7 @@ const ProjectForm = ({ onCancel, initialValues, onSuccess }: Props) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const workspaceId = useWorkspaceId();
+  const projectId = useProjectId();
 
   const [isPending, setIsPending] = useState(false);
   const [preview, setPreview] = useState(initialValues?.image ?? null);
@@ -177,6 +179,7 @@ const ProjectForm = ({ onCancel, initialValues, onSuccess }: Props) => {
           name: values.name,
           image: imageUrl ?? undefined,
           workspaceId,
+          projectId,
         });
       } else {
         await createProject.mutateAsync({

@@ -1,18 +1,20 @@
 import { db } from "@/db";
 import { project } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
-import { deleteCloudinaryImage } from "@/lib/serverHelpers";
+import { deleteCloudinaryImage, verifyRole } from "@/lib/serverHelpers";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
 import {
   createProjectSchema,
-  projectNWorkspaceIdSchema,
   updateProjectSchema,
 } from "@/schemas/project/schema";
 
-import { hasRolePermission } from "@/lib/roleHierarchy";
-import { createTRPCRouter, workspaceProcedure } from "@/trpc/init";
+import {
+  createTRPCRouter,
+  projectProcedure,
+  workspaceProcedure,
+} from "@/trpc/init";
 
 export const projectRouter = createTRPCRouter({
   getMany: workspaceProcedure.query(async ({ input }) => {
@@ -26,33 +28,26 @@ export const projectRouter = createTRPCRouter({
     return projects;
   }),
 
-  getOne: workspaceProcedure
-    .input(projectNWorkspaceIdSchema)
-    .query(async ({ input }) => {
-      const { projectId, workspaceId } = input;
+  getOne: projectProcedure.query(async ({ input }) => {
+    const { projectId, workspaceId } = input;
 
-      const [existingProject] = await db
-        .select()
-        .from(project)
-        .where(
-          and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
-        )
-        .limit(1);
+    const [existingProject] = await db
+      .select()
+      .from(project)
+      .where(
+        and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
+      )
+      .limit(1);
 
-      return existingProject;
-    }),
+    return existingProject;
+  }),
 
   create: workspaceProcedure
     .input(createProjectSchema)
     .mutation(async ({ ctx, input }) => {
       const { name, image, workspaceId } = input;
 
-      if (!hasRolePermission(ctx.role, "Admin")) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `Requires Admin role or higher`,
-        });
-      }
+      verifyRole(ctx.role, "Admin");
 
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
@@ -69,17 +64,12 @@ export const projectRouter = createTRPCRouter({
       return createdProject;
     }),
 
-  update: workspaceProcedure
+  update: projectProcedure
     .input(updateProjectSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, image, name } = input;
+      const { id, image, name, workspaceId } = input;
 
-      if (!hasRolePermission(ctx.role, "Admin")) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `Requires Admin role or higher`,
-        });
-      }
+      verifyRole(ctx.role, "Admin");
 
       if (image && !isCloudinaryUrl(image)) {
         throw new TRPCError({
@@ -94,7 +84,7 @@ export const projectRouter = createTRPCRouter({
           name,
           image: image ?? null,
         })
-        .where(eq(project.id, id))
+        .where(and(eq(project.id, id), eq(project.workspaceId, workspaceId)))
         .returning();
 
       if (!updatedProject) {
@@ -107,93 +97,89 @@ export const projectRouter = createTRPCRouter({
       return updatedProject;
     }),
 
-  deleteProjectImage: workspaceProcedure
-    .input(projectNWorkspaceIdSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { projectId } = input;
+  deleteProjectImage: projectProcedure.mutation(async ({ ctx, input }) => {
+    const { projectId, workspaceId } = input;
 
-      if (!hasRolePermission(ctx.role, "Admin")) {
+    verifyRole(ctx.role, "Admin");
+
+    const [projectToUpdate] = await db
+      .select({ image: project.image })
+      .from(project)
+      .where(
+        and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
+      )
+      .limit(1);
+
+    if (!projectToUpdate) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Project not found",
+      });
+    }
+
+    // Delete image from Cloudinary if exists
+    if (projectToUpdate.image) {
+      try {
+        await deleteCloudinaryImage(projectToUpdate.image);
+      } catch (err) {
+        console.error("Failed to delete image from Cloudinary:", err);
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `Requires Admin role or higher`,
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete Workspace",
         });
       }
+    }
 
-      const [projectToUpdate] = await db
-        .select({ image: project.image })
-        .from(project)
-        .where(eq(project.id, projectId))
-        .limit(1);
+    // Update database to remove image reference
+    await db
+      .update(project)
+      .set({ image: null })
+      .where(
+        and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
+      );
 
-      if (!projectToUpdate) {
+    return { success: true };
+  }),
+
+  delete: projectProcedure.mutation(async ({ ctx, input }) => {
+    const { projectId, workspaceId } = input;
+
+    verifyRole(ctx.role, "Admin");
+
+    const [projectToDelete] = await db
+      .select({ id: project.id, image: project.image })
+      .from(project)
+      .where(
+        and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
+      )
+      .limit(1);
+
+    if (!projectToDelete) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      });
+    }
+
+    // Delete image from Cloudinary if exists (before deleting workspace)
+    if (projectToDelete.image) {
+      try {
+        await deleteCloudinaryImage(projectToDelete.image);
+      } catch (err) {
+        console.error("Failed to delete image from Cloudinary:", err);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Project not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete Workspace",
         });
       }
+    }
 
-      // Delete image from Cloudinary if exists
-      if (projectToUpdate.image) {
-        try {
-          await deleteCloudinaryImage(projectToUpdate.image);
-        } catch (err) {
-          console.error("Failed to delete image from Cloudinary:", err);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to delete Workspace",
-          });
-        }
-      }
+    await db
+      .delete(project)
+      .where(
+        and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))
+      );
 
-      // Update database to remove image reference
-      await db
-        .update(project)
-        .set({ image: null })
-        .where(eq(project.id, projectId));
-
-      return { success: true };
-    }),
-
-  delete: workspaceProcedure
-    .input(projectNWorkspaceIdSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { projectId } = input;
-
-      if (!hasRolePermission(ctx.role, "Admin")) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `Requires Admin role or higher`,
-        });
-      }
-
-      const [projectToDelete] = await db
-        .select({ id: project.id, image: project.image })
-        .from(project)
-        .where(eq(project.id, projectId))
-        .limit(1);
-
-      if (!projectToDelete) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
-        });
-      }
-
-      // Delete image from Cloudinary if exists (before deleting workspace)
-      if (projectToDelete.image) {
-        try {
-          await deleteCloudinaryImage(projectToDelete.image);
-        } catch (err) {
-          console.error("Failed to delete image from Cloudinary:", err);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to delete Workspace",
-          });
-        }
-      }
-
-      await db.delete(project).where(eq(project.id, projectId));
-
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 });

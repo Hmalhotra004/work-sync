@@ -1,12 +1,12 @@
 import { db } from "@/db";
 import { member, project, workspace } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { projectIdSchema } from "@/schemas/project/schema";
 import { workspaceIdSchema } from "@/schemas/workspace/schema";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { cache } from "react";
-import z from "zod";
 export const createTRPCContext = cache(async () => {
   /**
    * @see: https://trpc.io/docs/server/context
@@ -79,16 +79,12 @@ export const workspaceProcedure = protectedProcedure
   });
 
 export const projectProcedure = workspaceProcedure
-  .input(
-    z.object({
-      projectId: z.string().min(1, { error: "ProjectId is required" }),
-    })
-  )
+  .input(projectIdSchema)
   .use(async ({ next, input }) => {
     const { projectId, workspaceId } = input;
 
     const [existingProject] = await db
-      .select({})
+      .select({ id: project.id })
       .from(project)
       .where(
         and(eq(project.id, projectId), eq(project.workspaceId, workspaceId))

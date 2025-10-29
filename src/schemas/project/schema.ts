@@ -2,9 +2,8 @@ import { project } from "@/db/schema";
 import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 import z from "zod";
 
-export const projectNWorkspaceIdSchema = z.object({
-  projectId: z.string().min(1, { error: "Project Id is required" }),
-  workspaceId: z.string().min(1, { error: "Project Id is required" }),
+export const projectIdSchema = z.object({
+  projectId: z.string().trim().min(1, { error: "Project Id is required" }),
 });
 
 export const createProjectSchema = createInsertSchema(project)
@@ -14,9 +13,9 @@ export const createProjectSchema = createInsertSchema(project)
     updatedAt: true,
   })
   .extend({
-    workspaceId: z.string().min(1, { error: "id is required" }),
-    name: z.string().min(1, { error: "Project name is required" }),
-    image: z.url().optional().nullable(),
+    workspaceId: z.string().trim().min(1, { error: "WorkspaceId is required" }),
+    name: z.string().trim().min(1, { error: "Project name is required" }),
+    image: z.url().trim().optional().nullable(),
   });
 
 export const updateProjectSchema = createUpdateSchema(project)
@@ -25,8 +24,8 @@ export const updateProjectSchema = createUpdateSchema(project)
     updatedAt: true,
   })
   .extend({
-    id: z.string().min(1, { error: "id is required" }),
-    workspaceId: z.string().min(1, { error: "workspaceId is required" }),
-    name: z.string().min(1, { error: "Project name is required" }),
-    image: z.url().optional().nullable(),
+    id: z.string().trim().min(1, { error: "id is required" }),
+    workspaceId: z.string().trim().min(1, { error: "workspaceId is required" }),
+    name: z.string().trim().min(1, { error: "Project name is required" }),
+    image: z.url().trim().optional().nullable(),
   });
