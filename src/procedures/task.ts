@@ -1,6 +1,5 @@
 import { db } from "@/db";
 import { project, task, user } from "@/db/schema";
-import { verifyRole } from "@/lib/serverHelpers";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay } from "date-fns";
 import { and, asc, desc, eq, gte, ilike, lte } from "drizzle-orm";
@@ -10,17 +9,18 @@ import {
   taskGetManySchema,
   taskGetOneSchema,
   taskIdSchema,
+  updateTaskSchema,
 } from "@/schemas/task/schema";
 
+import { hasRolePermission } from "@/lib/roleHierarchy";
 import {
   createTRPCRouter,
   projectProcedure,
-  protectedProcedure,
-  taskProcedure,
+  workspaceProcedure,
 } from "@/trpc/init";
 
 export const taskRouter = createTRPCRouter({
-  getMany: projectProcedure
+  getMany: workspaceProcedure
     .input(taskGetManySchema)
     .query(async ({ input }) => {
       const {
@@ -81,7 +81,7 @@ export const taskRouter = createTRPCRouter({
       return tasks;
     }),
 
-  getOne: taskProcedure.input(taskGetOneSchema).query(async ({ input }) => {
+  getOne: projectProcedure.input(taskGetOneSchema).query(async ({ input }) => {
     const { projectId, workspaceId, taskId } = input;
 
     const [existingTask] = await db
@@ -106,7 +106,7 @@ export const taskRouter = createTRPCRouter({
     return existingTask;
   }),
 
-  create: protectedProcedure
+  create: projectProcedure
     .input(createTaskSchema)
     .mutation(async ({ ctx, input }) => {
       const {
@@ -128,7 +128,12 @@ export const taskRouter = createTRPCRouter({
         });
       }
 
-      await verifyRole(workspaceId, ctx.auth.user.id, "Moderator");
+      if (!hasRolePermission(ctx.role, "Moderator")) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Requires Moderator role or higher`,
+        });
+      }
 
       const [existingProject] = await db
         .select()
@@ -177,26 +182,43 @@ export const taskRouter = createTRPCRouter({
       return createdTask;
     }),
 
-  delete: taskProcedure.input(taskIdSchema).mutation(async ({ ctx, input }) => {
-    const { taskId, projectId, workspaceId } = input;
+  update: projectProcedure
+    .input(updateTaskSchema)
+    .mutation(async ({ ctx, input }) => {
+      const {
+        id,
+        name,
+        description,
+        dueDate,
+        status,
+        workspaceId,
+        projectId,
+        assigneeId,
+      } = input;
+    }),
 
-    if (ctx.role === "Member") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: `Requires Moderator role or higher`,
-      });
-    }
+  delete: projectProcedure
+    .input(taskIdSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { taskId, projectId, workspaceId } = input;
 
-    await db
-      .delete(task)
-      .where(
-        and(
-          eq(task.id, taskId),
-          eq(task.projectId, projectId),
-          eq(task.workspaceId, workspaceId)
-        )
-      );
+      if (ctx.role === "Member") {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: `Requires Moderator role or higher`,
+        });
+      }
 
-    return { success: true };
-  }),
+      await db
+        .delete(task)
+        .where(
+          and(
+            eq(task.id, taskId),
+            eq(task.projectId, projectId),
+            eq(task.workspaceId, workspaceId)
+          )
+        );
+
+      return { success: true };
+    }),
 });
