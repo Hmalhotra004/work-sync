@@ -69,7 +69,6 @@ export const taskRouter = createTRPCRouter({
           // assignee details
           assigneeId: user.id,
           assigneeName: user.name,
-          assigneeEmail: user.email,
           assigneeImage: user.image,
         })
         .from(task)

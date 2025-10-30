@@ -9,6 +9,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
+import DataCalendar from "./DataCalendar";
 import DataKanban from "./DataKanban";
 import { DataTable } from "./DataTable";
 import { getTaskColumns } from "./TaskColumns";
@@ -108,7 +109,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
               value="calender"
               className="mt-0"
             >
-              Ch
+              <DataCalendar data={tasks ?? []} />
             </TabsContent>
           </>
         )}

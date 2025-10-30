@@ -30,7 +30,6 @@ export type TaskGetManyType = {
   projectName: string | null;
   projectImage: string | null;
   assigneeName: string | null;
-  assigneeEmail: string | null;
   assigneeImage: string | null;
 };
 
@@ -76,4 +75,22 @@ export type uploadPayload = {
   id: string;
   status: TaskStatusType;
   position: number;
+};
+
+export type CalendarEventType = {
+  start: Date;
+  end: Date;
+  id: string;
+  title: string;
+  project: {
+    id: string | null;
+    name: string | null;
+    image: string | null;
+  };
+  assignee: {
+    id: string | null;
+    name: string | null;
+    image: string | null;
+  };
+  status: TaskStatusType;
 };
