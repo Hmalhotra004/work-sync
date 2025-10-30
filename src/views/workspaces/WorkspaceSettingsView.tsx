@@ -112,18 +112,16 @@ const WorkspaceSettingsView = ({ workspaceId }: Props) => {
       <ResetDialog />
 
       <div className="h-full w-full flex flex-col gap-y-2">
-        <Card className="w-full border-none shadow-none">
-          <CardHeader className="flex px-7">
+        <Card className="w-full border-none shadow-none p-0 pb-4">
+          <CardHeader className="flex p-0 gap-0">
             <CardTitle className="text-xl font-bold">
               Edit your workspace
             </CardTitle>
           </CardHeader>
 
-          <div className="px-7">
-            <DottedSeparator />
-          </div>
+          <DottedSeparator />
 
-          <CardContent className="px-7">
+          <CardContent className="p-0">
             <WorkspaceForm initialValues={data} />
           </CardContent>
         </Card>

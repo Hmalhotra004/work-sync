@@ -62,18 +62,16 @@ const ProjectSettingsView = ({ projectId, workspaceId }: Props) => {
       <DeleteDialog />
 
       <div className="h-full w-full flex flex-col gap-y-2">
-        <Card className="w-full border-none shadow-none">
-          <CardHeader className="flex px-7">
+        <Card className="w-full border-none shadow-none p-0 pb-4">
+          <CardHeader className="flex px-0">
             <CardTitle className="text-xl font-bold">
               Edit your Project
             </CardTitle>
           </CardHeader>
 
-          <div className="px-7">
-            <DottedSeparator />
-          </div>
+          <DottedSeparator />
 
-          <CardContent className="px-7">
+          <CardContent className="px-0">
             <ProjectForm initialValues={data} />
           </CardContent>
         </Card>
