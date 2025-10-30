@@ -71,3 +71,9 @@ export type RouteType = {
   icon: IconType;
   activeIcon: IconType;
 }[];
+
+export type uploadPayload = {
+  id: string;
+  status: TaskStatusType;
+  position: number;
+};

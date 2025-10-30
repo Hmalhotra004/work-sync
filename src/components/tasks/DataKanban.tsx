@@ -2,8 +2,17 @@
 
 import KanbanCard from "@/components/kanban/KanbanCard";
 import KanbanColumnHeader from "@/components/kanban/KanbanColumnHeader";
-import { TaskGetManyType, TaskStatusEnum, TaskStatusType } from "@/types";
-import { useCallback, useState } from "react";
+import { useTRPC } from "@/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import {
+  TaskGetManyType,
+  TaskStatusEnum,
+  TaskStatusType,
+  uploadPayload,
+} from "@/types";
 
 import {
   DragDropContext,
@@ -14,6 +23,8 @@ import {
 
 interface Props {
   data: TaskGetManyType[];
+  projectId: string;
+  workspaceId: string;
 }
 
 const boards: TaskStatusType[] = [
@@ -28,7 +39,10 @@ type TasksState = {
   [key in TaskStatusEnum]: TaskGetManyType[];
 };
 
-const DataKanban = ({ data }: Props) => {
+const DataKanban = ({ data, projectId, workspaceId }: Props) => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
   const [tasks, setTasks] = useState<TasksState>(() => {
     const initialTasks: TasksState = {
       [TaskStatusEnum.Backlog]: [],
@@ -51,91 +65,154 @@ const DataKanban = ({ data }: Props) => {
     return initialTasks;
   });
 
-  const onDragEnd = useCallback((result: DropResult) => {
-    if (!result.destination) return;
+  useEffect(() => {
+    const newTasks: TasksState = {
+      [TaskStatusEnum.Backlog]: [],
+      [TaskStatusEnum.Todo]: [],
+      [TaskStatusEnum.In_Progress]: [],
+      [TaskStatusEnum.In_Review]: [],
+      [TaskStatusEnum.Done]: [],
+    };
 
-    const { source, destination } = result;
-    const sourceStatus = source.droppableId as TaskStatusType;
-    const destinationStatus = destination.droppableId as TaskStatusType;
+    data.forEach((task) => {
+      newTasks[task.status].push(task);
+    });
 
-    let updatesPayload: {
-      id: string;
-      status: TaskStatusType;
-      position: number;
-    }[];
+    Object.keys(newTasks).forEach((status) => {
+      newTasks[status as TaskStatusType].sort(
+        (a, b) => a.position - b.position
+      );
+    });
 
-    setTasks((prevTasks) => {
-      const newTasks = { ...prevTasks };
+    setTasks(newTasks);
+  }, [data]);
 
-      // Safely remove the task from source column
-      const sourceColumn = [...newTasks[sourceStatus]];
-      const [movedTask] = sourceColumn.splice(source.index, 1);
-
-      // If there is not moved task ,return the previous state
-      if (!movedTask) {
-        console.error("No task found at the source index");
-        return prevTasks;
-      }
-
-      // create new task with potentially updated status
-      const updatedMovedTask =
-        sourceStatus !== destinationStatus
-          ? { ...movedTask, status: destinationStatus }
-          : movedTask;
-
-      // update the column
-      newTasks[sourceStatus] = sourceColumn;
-
-      // add the task to destination column
-      const destColumn = [...newTasks[destinationStatus]];
-      destColumn.splice(destination.index, 0, updatedMovedTask);
-      newTasks[destinationStatus] = destColumn;
-
-      // prepare minimal update payloads
-      updatesPayload = [];
-
-      // always update the moved task
-      updatesPayload.push({
-        id: updatedMovedTask.id,
-        status: destinationStatus,
-        position: Math.min((destination.index + 1) * 1000, 1_000_000),
-      });
-
-      // update positions for affected destination column
-      newTasks[destinationStatus].forEach((task, idx) => {
-        if (task && task.id !== updatedMovedTask.id) {
-          const newPosition = Math.min((idx + 1) * 1000, 1_000_000);
-
-          if (task.position !== newPosition) {
-            updatesPayload.push({
-              id: task.id,
-              status: destinationStatus,
-              position: newPosition,
-            });
-          }
+  const kanbanUpdate = useMutation(
+    trpc.task.updateKanban.mutationOptions({
+      onMutate: async () => {
+        if (kanbanUpdate.isPending) {
+          kanbanUpdate.reset();
         }
-      });
 
-      // If the task  moved between columns, update positions in the source column
-      if (sourceStatus !== destinationStatus) {
-        newTasks[sourceStatus].forEach((task, idx) => {
-          if (task) {
+        // Cancel ongoing fetches for smoother UX
+        await queryClient.cancelQueries(
+          trpc.task.getMany.queryOptions({ workspaceId })
+        );
+        await queryClient.cancelQueries(
+          trpc.task.getMany.queryOptions({ workspaceId, projectId })
+        );
+
+        // Snapshot previous state
+        const previous = tasks;
+
+        // Apply optimistic update (already reflected locally)
+        return { previous };
+      },
+      // onSuccess: () => toast.success("Tasks updated"),
+      onError: (err, _newData, context) => {
+        if (context?.previous) {
+          setTasks(context.previous);
+        }
+        toast.error("An Error Occured");
+        console.error(err.message);
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(
+          trpc.task.getMany.queryOptions({ workspaceId })
+        );
+        await queryClient.invalidateQueries(
+          trpc.task.getMany.queryOptions({ workspaceId, projectId })
+        );
+      },
+    })
+  );
+
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) return;
+
+      const { source, destination } = result;
+      const sourceStatus = source.droppableId as TaskStatusType;
+      const destinationStatus = destination.droppableId as TaskStatusType;
+
+      let updatesPayload: uploadPayload[] = [];
+
+      setTasks((prevTasks) => {
+        const newTasks = { ...prevTasks };
+
+        // Safely remove the task from source column
+        const sourceColumn = [...newTasks[sourceStatus]];
+        const [movedTask] = sourceColumn.splice(source.index, 1);
+
+        // If there is not moved task ,return the previous state
+        if (!movedTask) {
+          console.error("No task found at the source index");
+          return prevTasks;
+        }
+
+        // create new task with potentially updated status
+        const updatedMovedTask =
+          sourceStatus !== destinationStatus
+            ? { ...movedTask, status: destinationStatus }
+            : movedTask;
+
+        // update the column
+        newTasks[sourceStatus] = sourceColumn;
+
+        // add the task to destination column
+        const destColumn = [...newTasks[destinationStatus]];
+        destColumn.splice(destination.index, 0, updatedMovedTask);
+        newTasks[destinationStatus] = destColumn;
+
+        // prepare minimal update payloads
+        updatesPayload = [];
+
+        // always update the moved task
+        updatesPayload.push({
+          id: updatedMovedTask.id,
+          status: destinationStatus,
+          position: Math.min((destination.index + 1) * 1000, 1_000_000),
+        });
+
+        // update positions for affected destination column
+        newTasks[destinationStatus].forEach((task, idx) => {
+          if (task && task.id !== updatedMovedTask.id) {
             const newPosition = Math.min((idx + 1) * 1000, 1_000_000);
 
             if (task.position !== newPosition) {
               updatesPayload.push({
                 id: task.id,
-                status: sourceStatus,
+                status: destinationStatus,
                 position: newPosition,
               });
             }
           }
         });
-      }
 
-      return newTasks;
-    });
-  }, []);
+        // If the task  moved between columns, update positions in the source column
+        if (sourceStatus !== destinationStatus) {
+          newTasks[sourceStatus].forEach((task, idx) => {
+            if (task) {
+              const newPosition = Math.min((idx + 1) * 1000, 1_000_000);
+
+              if (task.position !== newPosition) {
+                updatesPayload.push({
+                  id: task.id,
+                  status: sourceStatus,
+                  position: newPosition,
+                });
+              }
+            }
+          });
+        }
+
+        kanbanUpdate.mutate({ tasks: updatesPayload, projectId, workspaceId });
+
+        return newTasks;
+      });
+    },
+    [kanbanUpdate, projectId, workspaceId]
+  );
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>

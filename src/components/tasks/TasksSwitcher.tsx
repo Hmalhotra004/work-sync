@@ -97,7 +97,11 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
               value="kanban"
               className="mt-0"
             >
-              <DataKanban data={tasks ?? []} />
+              <DataKanban
+                data={tasks ?? []}
+                projectId={projectId}
+                workspaceId={workspaceId}
+              />
             </TabsContent>
 
             <TabsContent

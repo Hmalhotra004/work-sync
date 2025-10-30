@@ -7,6 +7,7 @@ import { and, asc, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import {
   createTaskSchema,
   taskGetManySchema,
+  updateKanbanSchema,
   updateTaskSchema,
 } from "@/schemas/task/schema";
 
@@ -259,6 +260,55 @@ export const taskRouter = createTRPCRouter({
 
         return updatedTask;
       }
+    }),
+
+  updateKanban: projectProcedure
+    .input(updateKanbanSchema)
+    .mutation(async ({ input }) => {
+      const { tasks, projectId, workspaceId } = input;
+
+      const updatedTasks = await db.transaction(async (tx) => {
+        const results = [];
+
+        for (const t of tasks) {
+          const [existingTask] = await tx
+            .select({ id: task.id })
+            .from(task)
+            .where(
+              and(
+                eq(task.id, t.id),
+                eq(task.projectId, projectId),
+                eq(task.workspaceId, workspaceId)
+              )
+            )
+            .limit(1);
+
+          if (!existingTask) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `Task not found`,
+            });
+          }
+
+          await tx
+            .update(task)
+            .set({
+              status: t.status,
+              position: t.position,
+            })
+            .where(eq(task.id, t.id));
+
+          results.push({
+            id: t.id,
+            status: t.status,
+            position: t.position,
+          });
+        }
+
+        return results;
+      });
+
+      return { success: true, updatedTasks };
     }),
 
   delete: taskProcedure.mutation(async ({ ctx, input }) => {

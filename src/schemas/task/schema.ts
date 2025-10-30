@@ -22,6 +22,21 @@ export const taskGetManySchema = z.object({
   projectId: z.string().trim().optional(),
 });
 
+export const updateKanbanSchema = z.object({
+  tasks: z.array(
+    z.object({
+      id: z.string().trim().min(1, { error: "id is required" }),
+      status: taskStatusSchema,
+      position: z
+        .number()
+        .int()
+        .positive()
+        .min(1000, { error: "Position is required" })
+        .max(1_000_000, { error: "Max position crossed" }),
+    })
+  ),
+});
+
 export const createTaskSchema = createInsertSchema(task)
   .omit({
     id: true,
