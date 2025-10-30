@@ -7,9 +7,10 @@ interface Props {
   date: string;
   status?: TaskStatusType;
   className?: ClassValue;
+  hideDetails?: boolean;
 }
 
-const TaskDate = ({ date, className, status }: Props) => {
+const TaskDate = ({ date, className, status, hideDetails = false }: Props) => {
   const today = startOfDay(new Date());
   const endDate = startOfDay(new Date(date));
   const diffInDaysValue = differenceInDays(endDate, today);
@@ -33,7 +34,9 @@ const TaskDate = ({ date, className, status }: Props) => {
         <span className={cn("truncate", className)}>
           {format(endDate, "PPP")}
         </span>
-        <span className="text-xs">Completed on {format(endDate, "PPP")}</span>
+        {!hideDetails && (
+          <span className="text-xs">Completed on {format(endDate, "PPP")}</span>
+        )}
       </div>
     );
   }
@@ -53,9 +56,13 @@ const TaskDate = ({ date, className, status }: Props) => {
       <span className={cn("truncate", className)}>
         {format(endDate, "PPP")}
       </span>
-      <span className="text-xs">
-        {diffInDaysValue < 0 ? overdue(diffInDaysValue) : days(diffInDaysValue)}
-      </span>
+      {!hideDetails && (
+        <span className="text-xs">
+          {diffInDaysValue < 0
+            ? overdue(diffInDaysValue)
+            : days(diffInDaysValue)}
+        </span>
+      )}
     </div>
   );
 };
