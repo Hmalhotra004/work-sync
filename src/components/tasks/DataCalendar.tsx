@@ -14,6 +14,7 @@ import {
 } from "date-fns";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import CalendarToolbar from "./CalendarToolbar";
 import "./data-calendar.css";
 import EventCard from "./EventCard";
 
@@ -79,7 +80,15 @@ const DataCalendar = ({ data }: Props) => {
         weekdayFormat: (date, culture, localizer) =>
           localizer?.format(date, "EEE", culture) ?? "",
       }}
-      components={{ eventWrapper: ({ event }) => <EventCard data={event} /> }}
+      components={{
+        eventWrapper: ({ event }) => <EventCard data={event} />,
+        toolbar: () => (
+          <CalendarToolbar
+            date={value}
+            onNavigate={handleNavigate}
+          />
+        ),
+      }}
     />
   );
 };
