@@ -43,6 +43,7 @@ export const createTaskSchema = createInsertSchema(task)
     position: true,
     createdAt: true,
     updatedAt: true,
+    completedDate: true,
   })
   .extend({
     name: z.string().trim().min(1, { error: "Task name is required" }),
@@ -59,6 +60,7 @@ export const updateTaskSchema = createUpdateSchema(task)
     position: true,
     createdAt: true,
     updatedAt: true,
+    completedDate: true,
   })
   .extend({
     id: z.string().trim().min(1, { error: "id is required" }),

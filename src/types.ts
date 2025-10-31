@@ -24,6 +24,7 @@ export type TaskGetManyType = {
   description: string | null;
   status: "Backlog" | "Todo" | "In Progress" | "In Review" | "Done";
   dueDate: string;
+  completedDate: string | null;
   position: number;
   projectId: string | null;
   assigneeId: string | null;

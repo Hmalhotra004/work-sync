@@ -56,6 +56,7 @@ export const taskRouter = createTRPCRouter({
           description: task.description,
           status: task.status,
           dueDate: task.dueDate,
+          completedDate:task.completedDate,
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
           position: task.position,
@@ -157,6 +158,7 @@ export const taskRouter = createTRPCRouter({
           projectId,
           assigneeId,
           position: newPosition,
+          completedDate: status === "Done" ? new Date() : null,
         })
         .returning();
 
@@ -209,6 +211,7 @@ export const taskRouter = createTRPCRouter({
             assigneeId,
             dueDate,
             status,
+            completedDate: status === "Done" ? new Date() : null,
           })
           .where(
             and(
@@ -247,6 +250,7 @@ export const taskRouter = createTRPCRouter({
             dueDate,
             status,
             position: newPosition,
+            completedDate: status === "Done" ? new Date() : null,
           })
           .where(
             and(
@@ -271,7 +275,11 @@ export const taskRouter = createTRPCRouter({
 
         for (const t of tasks) {
           const [existingTask] = await tx
-            .select({ id: task.id })
+            .select({
+              id: task.id,
+              status: task.status,
+              date: task.completedDate,
+            })
             .from(task)
             .where(
               and(
@@ -289,11 +297,22 @@ export const taskRouter = createTRPCRouter({
             });
           }
 
+          let completedDate;
+
+          if (t.status === existingTask.status) {
+            completedDate = existingTask.date;
+          } else if (t.status === "Done") {
+            completedDate = new Date();
+          } else {
+            completedDate = null;
+          }
+
           await tx
             .update(task)
             .set({
               status: t.status,
               position: t.position,
+              completedDate,
             })
             .where(eq(task.id, t.id));
 

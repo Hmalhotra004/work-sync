@@ -8,9 +8,16 @@ interface Props {
   status?: TaskStatusType;
   className?: ClassValue;
   hideDetails?: boolean;
+  completedDate?: string | null;
 }
 
-const TaskDate = ({ date, className, status, hideDetails = false }: Props) => {
+const TaskDate = ({
+  date,
+  completedDate,
+  className,
+  status,
+  hideDetails = false,
+}: Props) => {
   const today = startOfDay(new Date());
   const endDate = startOfDay(new Date(date));
   const diffInDaysValue = differenceInDays(endDate, today);
@@ -35,7 +42,9 @@ const TaskDate = ({ date, className, status, hideDetails = false }: Props) => {
           {format(endDate, "PPP")}
         </span>
         {!hideDetails && (
-          <span className="text-xs">Completed on {format(endDate, "PPP")}</span>
+          <span className="text-xs">
+            Completed on {format(completedDate ?? endDate, "PPP")}
+          </span>
         )}
       </div>
     );

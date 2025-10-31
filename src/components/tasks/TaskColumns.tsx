@@ -71,12 +71,13 @@ export const getTaskColumns = (
         </Button>
       ),
       cell: ({ row }) => {
-        const { dueDate, status } = row.original;
+        const { dueDate, status, completedDate } = row.original;
 
         return (
           <TaskDate
             date={dueDate}
             status={status}
+            completedDate={completedDate}
           />
         );
       },
