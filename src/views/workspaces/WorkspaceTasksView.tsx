@@ -1,5 +1,6 @@
 "use client";
 
+import { useTasksFilters } from "@/hooks/useTasksFilters";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
@@ -10,11 +11,26 @@ interface Props {
 const WorkspaceTasksView = ({ workspaceId }: Props) => {
   const trpc = useTRPC();
 
-  const { data } = useSuspenseQuery(
-    trpc.workspace.getOne.queryOptions({ workspaceId })
+  const [{ assigneeId, dueDate, search, status, projectId }] =
+    useTasksFilters();
+
+  const { data: tasks } = useSuspenseQuery(
+    trpc.task.getMany.queryOptions({
+      workspaceId,
+      projectId,
+      assigneeId,
+      status,
+      dueDate,
+      search,
+    })
   );
 
-  return <div>WorkspaceTasksView</div>;
+  return (
+    <div>
+      WorkspaceTasksView
+      {JSON.stringify(tasks)}
+    </div>
+  );
 };
 
 export default WorkspaceTasksView;
