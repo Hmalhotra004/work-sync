@@ -1,7 +1,6 @@
 "use client";
 
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { OctagonAlertIcon } from "lucide-react";
+import AlertError from "@/components/AlertError";
 
 interface Props {
   error: Error;
@@ -10,10 +9,7 @@ interface Props {
 const PageError = ({ error }: Props) => {
   return (
     <div className="flex mx-auto">
-      <Alert className="bg-destructive/10 border-none">
-        <OctagonAlertIcon className="size-4 !text-destructive" />
-        <AlertTitle>{error.message}</AlertTitle>
-      </Alert>
+      <AlertError error={error.message} />
     </div>
   );
 };

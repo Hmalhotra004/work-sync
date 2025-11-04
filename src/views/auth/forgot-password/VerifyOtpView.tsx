@@ -1,12 +1,10 @@
 "use client";
 import Loader from "@/components/Loader";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import useOTPExpire from "@/hooks/useOTPExpire";
 import { authClient } from "@/lib/authClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { OctagonAlertIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -29,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import AlertError from "@/components/AlertError";
 import {
   InputOTP,
   InputOTPGroup,
@@ -153,12 +152,7 @@ const VerifyOtpView = ({ email }: Props) => {
               )}
             />
 
-            {!!error && (
-              <Alert className="bg-destructive/10 border-none">
-                <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
-                <AlertTitle>{error}</AlertTitle>
-              </Alert>
-            )}
+            {!!error && <AlertError error={error} />}
 
             <Button
               type="submit"

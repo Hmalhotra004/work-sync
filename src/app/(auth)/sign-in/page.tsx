@@ -2,7 +2,6 @@
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OctagonAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -10,10 +9,10 @@ import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { z } from "zod";
 
+import AlertError from "@/components/AlertError";
 import DottedSeparator from "@/components/DottedSeparator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -126,12 +125,7 @@ const SignInView = () => {
               )}
             />
 
-            {!!error && (
-              <Alert className="bg-destructive/10 border-none">
-                <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
-                <AlertTitle>{error}</AlertTitle>
-              </Alert>
-            )}
+            {!!error && <AlertError error={error} />}
 
             <Button
               size="lg"

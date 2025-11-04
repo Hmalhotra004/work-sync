@@ -1,21 +1,21 @@
 "use client";
-import { useState } from "react";
 
+import AlertError from "@/components/AlertError";
+import DottedSeparator from "@/components/DottedSeparator";
+import FormInput from "@/components/form/FormInput";
+import Loader from "@/components/Loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authClient } from "@/lib/authClient";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OctagonAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { z } from "zod";
 
-import DottedSeparator from "@/components/DottedSeparator";
-import FormInput from "@/components/form/FormInput";
-import Loader from "@/components/Loader";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -23,7 +23,6 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { authClient } from "@/lib/authClient";
 
 const formSchema = z.object({
   name: z.string().min(1, { error: "name is required" }),
@@ -148,12 +147,7 @@ const SignUpView = () => {
               )}
             />
 
-            {!!error && (
-              <Alert className="bg-destructive/10 border-none">
-                <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
-                <AlertTitle>{error}</AlertTitle>
-              </Alert>
-            )}
+            {!!error && <AlertError error={error} />}
 
             <Button
               size="lg"

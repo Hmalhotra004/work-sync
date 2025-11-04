@@ -1,16 +1,17 @@
 "use client";
-import { useEffect, useState } from "react";
 
+import AlertError from "@/components/AlertError";
+import Loader from "@/components/Loader";
+import { Button } from "@/components/ui/button";
+import useOTPExpire from "@/hooks/useOTPExpire";
+import { authClient } from "@/lib/authClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { OctagonAlertIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import Loader from "@/components/Loader";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import {
   Form,
   FormControl,
@@ -26,13 +28,12 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import useOTPExpire from "@/hooks/useOTPExpire";
-import { authClient } from "@/lib/authClient";
 
 interface Props {
   email: string;
@@ -176,12 +177,7 @@ const EmailVerificationView = ({ email }: Props) => {
               )}
             />
 
-            {!!error && (
-              <Alert className="bg-destructive/10 border-none">
-                <OctagonAlertIcon className="h-4 w-4 !text-destructive" />
-                <AlertTitle>{error}</AlertTitle>
-              </Alert>
-            )}
+            {!!error && <AlertError error={error} />}
 
             <Button
               type="submit"
