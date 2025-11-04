@@ -43,7 +43,7 @@ export type MemberType = {
   name: string;
   email: string;
   image: string | null;
-  role: "Owner" | "Admin" | "Moderator" | "Member";
+  role: MemberRoleType;
   isOwner: boolean;
   createdAt: string;
   updatedAt: string;
@@ -70,6 +70,7 @@ export type RouteType = {
   href: string;
   icon: IconType;
   activeIcon: IconType;
+  allowedRole?: MemberRoleType[];
 }[];
 
 export type uploadPayload = {

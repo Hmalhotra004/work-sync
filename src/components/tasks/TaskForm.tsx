@@ -52,7 +52,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
   const projectId = useProjectId();
   const isMobile = useIsMobile();
 
-  const { data: projects, isLoading: isLoadingProjects } = useQuery(
+  const { data: projectQuery, isLoading: isLoadingProjects } = useQuery(
     trpc.project.getMany.queryOptions({ workspaceId })
   );
 
@@ -117,7 +117,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
 
   const isLoading = isLoadingMembers || isLoadingProjects;
 
-  if (isLoading || !projects || !members) {
+  if (isLoading || !projectQuery || !members) {
     return (
       <div className="flex items-center justify-center p-6">
         <Loader className="size-5 text-muted-foreground" />
@@ -291,7 +291,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                     <FormMessage />
 
                     <SelectContent>
-                      {projects.map((p) => (
+                      {projectQuery.projects.map((p) => (
                         <SelectItem
                           key={p.id}
                           value={p.id}

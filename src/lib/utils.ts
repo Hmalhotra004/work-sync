@@ -1,4 +1,4 @@
-import { TaskStatusEnum } from "@/types";
+import { MemberRoleType, TaskStatusEnum } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -40,3 +40,7 @@ export const TASKSTATUSMAP = [
     label: "Done",
   },
 ];
+
+export const allowedOwner: MemberRoleType[] = ["Owner"];
+export const allowedAdmin: MemberRoleType[] = ["Owner", "Admin"];
+export const allowedMod: MemberRoleType[] = ["Owner", "Admin", "Moderator"];

@@ -2,7 +2,7 @@
 
 import { useCreateProjectModal } from "@/hooks/useCreateProjectModal";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
-import { cn } from "@/lib/utils";
+import { allowedAdmin, cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -15,21 +15,35 @@ const Projects = () => {
   const workspaceId = useWorkspaceId();
   const pathname = usePathname();
 
-  const { data } = useQuery(trpc.project.getMany.queryOptions({ workspaceId }));
+  const { data, isLoading } = useQuery(
+    trpc.project.getMany.queryOptions({ workspaceId })
+  );
 
   const { open } = useCreateProjectModal();
+
+  if (!data || isLoading) {
+    return (
+      <div className="flex flex-col gap-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase text-foreground-500">Projects</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs uppercase text-foreground-500">Projects</p>
-        <RiAddCircleFill
-          onClick={open}
-          className="size-5 text-foreground-500 cursor-pointer hover:opacity-75 transition"
-        />
+        {allowedAdmin.includes(data?.role) && (
+          <RiAddCircleFill
+            onClick={open}
+            className="size-5 text-foreground-500 cursor-pointer hover:opacity-75 transition"
+          />
+        )}
       </div>
 
-      {data?.map((project) => {
+      {data?.projects.map((project) => {
         const href = `/workspaces/${workspaceId}/projects/${project.id}`;
         const isActive = pathname === href;
 

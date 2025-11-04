@@ -1,5 +1,6 @@
 import { RouteType } from "@/types";
 import { SettingsIcon, UserIcon } from "lucide-react";
+import { allowedAdmin } from "./utils";
 
 import {
   GoCheckCircle,
@@ -32,5 +33,6 @@ export const routes: RouteType = [
     href: `/settings`,
     icon: SettingsIcon,
     activeIcon: SettingsIcon,
+    allowedRole: allowedAdmin,
   },
 ];

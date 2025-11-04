@@ -31,7 +31,7 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
   const [filters, setFilters] = useTasksFilters();
   const { assigneeId, dueDate, projectId, status, search } = filters;
 
-  const { data: projects, isLoading: isLoadingProjects } = useQuery(
+  const { data: projectQuery, isLoading: isLoadingProjects } = useQuery(
     trpc.project.getMany.queryOptions({ workspaceId })
   );
   const { data: members, isLoading: isLoadingMembers } = useQuery(
@@ -39,7 +39,7 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
   );
 
   const isLoading = isLoadingMembers || isLoadingProjects;
-  if (isLoading || !members || !projects) return null;
+  if (isLoading || !members || !projectQuery) return null;
 
   const onStatusChange = (value: string) => {
     setFilters({ status: value === "all" ? null : (value as TaskStatusEnum) });
@@ -116,7 +116,7 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
           placeholder="Project"
           options={[
             { value: "all", label: "All Projects", image: null },
-            ...projects.map((m) => ({
+            ...projectQuery.projects.map((m) => ({
               value: m.id,
               label: m.name,
               image: m.image,
@@ -132,6 +132,7 @@ const TaskFilters = ({ hideProjectFilter = false }: Props) => {
         className="h-12 w-full lg:w-auto"
         value={dueDate ? dueDate.toISOString() : ""}
         onChange={(date) => setFilters({ dueDate: date ?? null })}
+        disabled={false}
       />
 
       {hasActiveFilters && (

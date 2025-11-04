@@ -17,7 +17,7 @@ import {
 } from "@/trpc/init";
 
 export const projectRouter = createTRPCRouter({
-  getMany: workspaceProcedure.query(async ({ input }) => {
+  getMany: workspaceProcedure.query(async ({ ctx, input }) => {
     const { workspaceId } = input;
 
     const projects = await db
@@ -25,7 +25,7 @@ export const projectRouter = createTRPCRouter({
       .from(project)
       .where(eq(project.workspaceId, workspaceId));
 
-    return projects;
+    return { projects, role: ctx.role };
   }),
 
   getOne: projectProcedure.query(async ({ input }) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import AlertError from "@/components/AlertError";
 import DottedSeparator from "@/components/DottedSeparator";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import WorkspaceForm from "@/components/workspace/WorkspaceForm";
 import { useConfirm } from "@/hooks/useConfirm";
+import { allowedAdmin } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { CheckIcon, CopyIcon, RefreshCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -105,6 +107,14 @@ const WorkspaceSettingsView = ({ workspaceId }: Props) => {
   }
 
   const fullInviteLink = `${window.location.origin}/workspaces/${data.id}/join/${data.inviteCode}`;
+
+  if (!allowedAdmin.includes(data.role)) {
+    setTimeout(() => {
+      router.back();
+    }, 1500);
+
+    return <AlertError error="Unauthorized Access to this page" />;
+  }
 
   return (
     <>
