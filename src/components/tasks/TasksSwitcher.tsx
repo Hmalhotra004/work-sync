@@ -4,7 +4,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
 import { useTasksFilters } from "@/hooks/useTasksFilters";
-import { tabs } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
@@ -17,15 +16,17 @@ import TaskFilters from "./TaskFilters";
 
 interface Props {
   workspaceId: string;
-  projectId: string;
+  projectId?: string;
+  project: boolean;
 }
 
-const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
+const TasksSwitcher = ({ projectId, workspaceId, project = false }: Props) => {
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
 
-  const [{ assigneeId, dueDate, search, status }] = useTasksFilters();
+  const [{ assigneeId, dueDate, search, status, projectId: id }] =
+    useTasksFilters();
 
   const trpc = useTRPC();
 
@@ -34,7 +35,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
   const { data: tasks, isLoading: isLoadingTasks } = useQuery(
     trpc.task.getMany.queryOptions({
       workspaceId,
-      projectId,
+      projectId: projectId ?? id,
       assigneeId,
       dueDate,
       status,
@@ -42,7 +43,27 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
     })
   );
 
-  const taskColumns = getTaskColumns(false);
+  const taskColumns = getTaskColumns(project);
+
+  const tabs = [
+    {
+      label: "Table",
+      value: "table",
+    },
+    ...(!project
+      ? [
+          {
+            label: "Kanban",
+            value: "kanban",
+          },
+        ]
+      : []),
+
+    {
+      label: "Calender",
+      value: "calender",
+    },
+  ];
 
   return (
     <Tabs
@@ -74,7 +95,7 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
 
         <DottedSeparator className="my-4" />
 
-        <TaskFilters hideProjectFilter />
+        <TaskFilters hideProjectFilter={!project} />
 
         <DottedSeparator className="my-4" />
 
@@ -94,16 +115,18 @@ const TasksSwitcher = ({ projectId, workspaceId }: Props) => {
               />
             </TabsContent>
 
-            <TabsContent
-              value="kanban"
-              className="mt-0"
-            >
-              <DataKanban
-                data={tasks ?? []}
-                projectId={projectId}
-                workspaceId={workspaceId}
-              />
-            </TabsContent>
+            {!project && (
+              <TabsContent
+                value="kanban"
+                className="mt-0"
+              >
+                <DataKanban
+                  data={tasks ?? []}
+                  projectId={projectId ?? ""}
+                  workspaceId={workspaceId}
+                />
+              </TabsContent>
+            )}
 
             <TabsContent
               value="calender"
