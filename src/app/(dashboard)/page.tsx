@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/spinner";
 import { auth } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/trpc/server";
 import { headers } from "next/headers";
@@ -28,6 +29,8 @@ const Home = async () => {
   if (workspaces && workspaces.length === 0) {
     redirect(`/workspaces/create`);
   }
+
+  return <Spinner />;
 };
 
 export default Home;

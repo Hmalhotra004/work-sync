@@ -71,7 +71,7 @@ export type RouteType = {
   icon: IconType;
   activeIcon: IconType;
   allowedRole?: MemberRoleType[];
-}[];
+};
 
 export type uploadPayload = {
   id: string;

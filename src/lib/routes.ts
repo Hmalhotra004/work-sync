@@ -9,7 +9,7 @@ import {
   GoHomeFill,
 } from "react-icons/go";
 
-export const routes: RouteType = [
+export const routes: RouteType[] = [
   {
     label: "Home",
     href: "",
