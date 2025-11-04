@@ -14,6 +14,9 @@ export type ProjectType = inferRouterOutputs<AppRouter>["project"]["getOne"];
 
 export type TaskType = inferRouterOutputs<AppRouter>["task"]["getOne"];
 
+export type TaskDetailsType =
+  inferRouterOutputs<AppRouter>["task"]["taskDetails"];
+
 // export type TaskGetManyType = inferRouterOutputs<AppRouter>["task"]["getMany"];
 export type TaskGetManyType = {
   id: string;

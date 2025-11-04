@@ -56,7 +56,7 @@ export const taskRouter = createTRPCRouter({
           description: task.description,
           status: task.status,
           dueDate: task.dueDate,
-          completedDate:task.completedDate,
+          completedDate: task.completedDate,
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
           position: task.position,
@@ -87,6 +87,37 @@ export const taskRouter = createTRPCRouter({
     const [existingTask] = await db
       .select()
       .from(task)
+      .where(
+        and(
+          eq(task.id, taskId),
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+
+    if (!existingTask) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Task not found",
+      });
+    }
+
+    return existingTask;
+  }),
+
+  taskDetails: taskProcedure.query(async ({ input }) => {
+    const { projectId, workspaceId, taskId } = input;
+
+    const [existingTask] = await db
+      .select({
+        task,
+        project,
+        assignee: { id: user.id, name: user.name, image: user.image },
+      })
+      .from(task)
+      .innerJoin(project, eq(project.id, task.projectId))
+      .innerJoin(user, eq(user.id, task.assigneeId))
       .where(
         and(
           eq(task.id, taskId),

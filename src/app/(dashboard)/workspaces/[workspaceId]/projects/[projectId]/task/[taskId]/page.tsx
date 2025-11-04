@@ -30,7 +30,7 @@ const ProjectIdPage = async ({ params }: Props) => {
   const queryClient = getQueryClient();
 
   void queryClient.prefetchQuery(
-    trpc.task.getOne.queryOptions({ workspaceId, projectId, taskId })
+    trpc.task.taskDetails.queryOptions({ workspaceId, projectId, taskId })
   );
 
   return (
