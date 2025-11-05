@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
+import { canManage } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { MemberRoleType, MemberType } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,11 +22,11 @@ import {
 
 interface Props {
   member: MemberType;
-  userId: string;
+  autheticatedUser: { id: string; role: MemberRoleType };
   isNotLast: boolean;
 }
 
-const Member = ({ member, isNotLast, userId }: Props) => {
+const Member = ({ member, isNotLast, autheticatedUser }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const workspaceId = useWorkspaceId();
@@ -42,11 +43,20 @@ const Member = ({ member, isNotLast, userId }: Props) => {
     })
   );
 
-  const isHimSelf = member.userId === userId;
+  const update = useMutation(
+    trpc.member.updateRole.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
+        );
+        toast.success(`Role Updated`);
+      },
+      onError: (error) => toast.error(error.message),
+    })
+  );
 
-  const isAdmin = member.role === "Admin";
-  const isMod = member.role === "Moderator";
-  const isMember = member.role === "Member";
+  const isHimSelf = member.userId === autheticatedUser.id;
+  const isAllowed = canManage(autheticatedUser.role, member.role);
 
   const [DeleteDialog, confirmDelete] = useConfirm(
     `Remove ${member.name}`,
@@ -54,7 +64,15 @@ const Member = ({ member, isNotLast, userId }: Props) => {
     "destructive"
   );
 
-  async function handleRoleChange(memberId: string, role: MemberRoleType) {}
+  async function handleRoleChange(role: MemberRoleType) {
+    update.mutateAsync({
+      memberId: member.memberId,
+      userId: member.userId,
+      workspaceId: member.workspaceId,
+      previousRole: member.role,
+      role,
+    });
+  }
 
   async function handleRemove() {
     const ok = await confirmDelete();
@@ -70,6 +88,7 @@ const Member = ({ member, isNotLast, userId }: Props) => {
   return (
     <Fragment key={member.memberId}>
       <DeleteDialog />
+
       <div className="flex items-center gap-[9px]">
         <MemberAvatar
           name={member.name}
@@ -83,7 +102,7 @@ const Member = ({ member, isNotLast, userId }: Props) => {
           <p className="text-xs text-muted-foreground">{member.email}</p>
         </div>
 
-        {!isHimSelf && (
+        {!isHimSelf && isAllowed && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -99,33 +118,100 @@ const Member = ({ member, isNotLast, userId }: Props) => {
               side="bottom"
               align="end"
             >
-              <DropdownMenuItem
-                className="font-medium cursor-pointer"
-                onClick={() => handleRoleChange(member.memberId, "Admin")}
-              >
-                Promote to Admin
-              </DropdownMenuItem>
+              {/* ----- OWNER CONTROLS ----- */}
+              {autheticatedUser.role === "Owner" && (
+                <>
+                  {member.role === "Moderator" && (
+                    <DropdownMenuItem
+                      className="font-medium cursor-pointer"
+                      onClick={() => handleRoleChange("Admin")}
+                      disabled={update.isPending}
+                    >
+                      Promote to Admin
+                    </DropdownMenuItem>
+                  )}
+                  {member.role === "Member" && (
+                    <DropdownMenuItem
+                      className="font-medium cursor-pointer"
+                      onClick={() => handleRoleChange("Moderator")}
+                      disabled={update.isPending}
+                    >
+                      Promote to Moderator
+                    </DropdownMenuItem>
+                  )}
+                  {member.role === "Admin" && (
+                    <DropdownMenuItem
+                      className="font-medium cursor-pointer text-rose-500 focus:text-rose-700"
+                      onClick={() => handleRoleChange("Moderator")}
+                      disabled={update.isPending}
+                    >
+                      Demote to Moderator
+                    </DropdownMenuItem>
+                  )}
+                  {member.role === "Moderator" && (
+                    <DropdownMenuItem
+                      className="font-medium cursor-pointer text-rose-500 focus:text-rose-700"
+                      onClick={() => handleRoleChange("Member")}
+                      disabled={update.isPending}
+                    >
+                      Demote to Member
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
 
-              <DropdownMenuItem
-                className="font-medium cursor-pointer"
-                onClick={() => handleRoleChange(member.memberId, "Moderator")}
-              >
-                Promote to Moderator
-              </DropdownMenuItem>
+              {/* ----- ADMIN CONTROLS ----- */}
+              {autheticatedUser.role === "Admin" &&
+                (member.role === "Moderator" || member.role === "Member") && (
+                  <>
+                    {/* only mods can be promoted to admin */}
+                    {member.role === "Moderator" && (
+                      <DropdownMenuItem
+                        className="font-medium cursor-pointer"
+                        onClick={() => handleRoleChange("Admin")}
+                        disabled={update.isPending}
+                      >
+                        Promote to Admin
+                      </DropdownMenuItem>
+                    )}
 
-              <DropdownMenuItem
-                className="font-medium cursor-pointer text-rose-500 focus:text-rose-700"
-                onClick={() => handleRoleChange(member.memberId, "Member")}
-              >
-                Demote to Member
-              </DropdownMenuItem>
+                    {/* members can only be promoted to mod */}
+                    {member.role === "Member" && (
+                      <DropdownMenuItem
+                        className="font-medium cursor-pointer"
+                        onClick={() => handleRoleChange("Moderator")}
+                        disabled={update.isPending}
+                      >
+                        Promote to Moderator
+                      </DropdownMenuItem>
+                    )}
 
-              <DropdownMenuItem
-                className="font-medium cursor-pointer text-rose-500 focus:text-rose-700"
-                onClick={handleRemove}
-              >
-                Remove {member.name}
-              </DropdownMenuItem>
+                    {/* demotions follow the hierarchy */}
+                    {member.role === "Moderator" && (
+                      <DropdownMenuItem
+                        className="font-medium cursor-pointer text-rose-500 focus:text-rose-700"
+                        onClick={() => handleRoleChange("Member")}
+                        disabled={update.isPending}
+                      >
+                        Demote to Member
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+
+              {/* ----- REMOVE (Owner/Admin can remove allowed roles) ----- */}
+              {(autheticatedUser.role === "Owner" ||
+                (autheticatedUser.role === "Admin" &&
+                  (member.role === "Moderator" ||
+                    member.role === "Member"))) && (
+                <DropdownMenuItem
+                  className="font-medium cursor-pointer text-rose-500 focus:text-rose-700"
+                  onClick={handleRemove}
+                  disabled={remove.isPending}
+                >
+                  Remove {member.name}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

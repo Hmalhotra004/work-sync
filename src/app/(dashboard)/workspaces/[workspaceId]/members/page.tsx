@@ -23,8 +23,6 @@ const WorkspaceMembers = async ({ params }: Props) => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  const userId = session.user.id;
-
   const workspaceId = (await params).workspaceId;
 
   const queryClient = getQueryClient();
@@ -37,10 +35,7 @@ const WorkspaceMembers = async ({ params }: Props) => {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<PageLoading />}>
         <ErrorBoundaryWrapper>
-          <WorkspaceMembersView
-            workspaceId={workspaceId}
-            userId={userId}
-          />
+          <WorkspaceMembersView workspaceId={workspaceId} />
         </ErrorBoundaryWrapper>
       </Suspense>
     </HydrationBoundary>

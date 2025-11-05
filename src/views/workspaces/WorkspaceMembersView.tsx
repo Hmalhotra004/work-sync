@@ -2,71 +2,87 @@
 
 import DottedSeparator from "@/components/DottedSeparator";
 import Member from "@/components/member/Member";
-import MemberList from "@/components/member/MemberList";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface Props {
   workspaceId: string;
-  userId: string;
 }
 
-const WorkspaceMembersView = ({ workspaceId, userId }: Props) => {
+const WorkspaceMembersView = ({ workspaceId }: Props) => {
   const trpc = useTRPC();
 
-  const { data: members } = useSuspenseQuery(
+  const { data } = useSuspenseQuery(
     trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
   );
 
-  const owners = members.filter((m) => m.role === "Owner");
-  const admins = members.filter((m) => m.role === "Admin");
-  const mods = members.filter((m) => m.role === "Moderator");
-  const mems = members.filter((m) => m.role === "Member");
+  const owners = data.members.filter((m) => m.role === "Owner");
+  const admins = data.members.filter((m) => m.role === "Admin");
+  const mods = data.members.filter((m) => m.role === "Moderator");
+  const mems = data.members.filter((m) => m.role === "Member");
 
-  const owner = owners[0];
+  const memberList = [
+    {
+      label: "Owner",
+      members: owners,
+    },
+    ...(admins.length > 0
+      ? [
+          {
+            label: "Admins",
+            members: admins,
+          },
+        ]
+      : []),
+    ...(mods.length > 0
+      ? [
+          {
+            label: "Moderators",
+            members: mods,
+          },
+        ]
+      : []),
+    ...(mems.length > 0
+      ? [
+          {
+            label: "Members",
+            members: mems,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-y-6">
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold mb-0.5">Owner</h1>
+        {memberList.map((d, idx) => {
+          return (
+            <div
+              className="flex flex-col"
+              key={idx}
+            >
+              <h1 className="text-xl font-bold mb-0.5">{d.label}</h1>
 
-          <DottedSeparator
-            className="mb-2"
-            gapSize="4px"
-            dotSize="3px"
-          />
+              <DottedSeparator
+                gapSize="4px"
+                dotSize="3px"
+              />
 
-          <Member
-            member={owner}
-            isNotLast={false}
-            userId={userId}
-          />
-        </div>
-
-        {admins.length > 0 && (
-          <MemberList
-            data={admins}
-            label="Admins"
-            userId={userId}
-          />
-        )}
-
-        {mods.length > 0 && (
-          <MemberList
-            data={mods}
-            label="Moderators"
-            userId={userId}
-          />
-        )}
-
-        {mems.length > 0 && (
-          <MemberList
-            data={mems}
-            label="Members"
-            userId={userId}
-          />
-        )}
+              <div className="mt-2">
+                {d.members.map((mem, index) => {
+                  return (
+                    <Member
+                      key={mem.memberId}
+                      member={mem}
+                      isNotLast={index < d.members.length - 1}
+                      autheticatedUser={data.autheticatedUser}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

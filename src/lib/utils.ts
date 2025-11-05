@@ -18,6 +18,21 @@ export function generateInviteCode(length: number): string {
   return result;
 }
 
+export function canManage(
+  userRole: MemberRoleType,
+  targetRole: MemberRoleType
+): boolean {
+  if (userRole === "Owner") {
+    return targetRole !== "Owner";
+  }
+
+  if (userRole === "Admin") {
+    return targetRole === "Moderator" || targetRole === "Member";
+  }
+
+  return false;
+}
+
 export const TASKSTATUSMAP = [
   {
     value: TaskStatusEnum.Backlog,

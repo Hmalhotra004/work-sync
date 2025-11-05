@@ -47,7 +47,6 @@ export type MemberType = {
   email: string;
   image: string | null;
   role: MemberRoleType;
-  isOwner: boolean;
   createdAt: string;
   updatedAt: string;
 };
