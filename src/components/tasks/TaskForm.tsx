@@ -257,7 +257,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
                     placeholder="Assignee"
                     Avatar={MemberAvatar}
                     disabled={isPending}
-                    options={members.map((m) => ({
+                    options={members.members.map((m) => ({
                       value: m.userId,
                       label: m.name,
                       image: m.image,
