@@ -1,9 +1,10 @@
 import { db } from "@/db";
-import { project } from "@/db/schema";
+import { project, task } from "@/db/schema";
 import { isCloudinaryUrl } from "@/lib/isCloudinaryUrl";
 import { deleteCloudinaryImage, verifyRole } from "@/lib/serverHelpers";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { and, eq, gte, lt, lte, ne } from "drizzle-orm";
 
 import {
   createProjectSchema,
@@ -40,6 +41,178 @@ export const projectRouter = createTRPCRouter({
       .limit(1);
 
     return existingProject;
+  }),
+
+  analytics: projectProcedure.query(async ({ ctx, input }) => {
+    const { projectId, workspaceId } = input;
+
+    const now = new Date();
+    const thisMonthStart = startOfMonth(now);
+    const thisMonthEnd = endOfMonth(now);
+    const lastMonthStart = startOfMonth(subMonths(now, 1));
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+    const thisMonthTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          gte(task.createdAt, thisMonthStart),
+          lte(task.createdAt, thisMonthEnd)
+        )
+      );
+
+    const lastMonthTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          gte(task.createdAt, lastMonthStart),
+          lte(task.createdAt, lastMonthEnd)
+        )
+      );
+
+    const taskCount = thisMonthTasks.length;
+    const taskDifference = taskCount - lastMonthTasks.length;
+
+    const thisMonthAssignedTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          eq(task.assigneeId, ctx.auth.user.id),
+          gte(task.createdAt, thisMonthStart),
+          lte(task.createdAt, thisMonthEnd)
+        )
+      );
+
+    const lastMonthAssignedTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          eq(task.assigneeId, ctx.auth.user.id),
+          gte(task.createdAt, lastMonthStart),
+          lte(task.createdAt, lastMonthEnd)
+        )
+      );
+
+    const assignedTaskCount = thisMonthAssignedTasks.length;
+    const assignedTaskDifference =
+      assignedTaskCount - lastMonthAssignedTasks.length;
+
+    const thisMonthIncompleteTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          ne(task.status, "Done"),
+          gte(task.createdAt, thisMonthStart),
+          lte(task.createdAt, thisMonthEnd)
+        )
+      );
+
+    const lastMonthIncompleteTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          ne(task.status, "Done"),
+          gte(task.createdAt, lastMonthStart),
+          lte(task.createdAt, lastMonthEnd)
+        )
+      );
+
+    const incompleteTaskCount = thisMonthIncompleteTasks.length;
+    const incompleteTaskDifference =
+      incompleteTaskCount - lastMonthIncompleteTasks.length;
+
+    const thisMonthCompletedTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          eq(task.status, "Done"),
+          gte(task.createdAt, thisMonthStart),
+          lte(task.createdAt, thisMonthEnd)
+        )
+      );
+
+    const lastMonthCompletedTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          eq(task.status, "Done"),
+          gte(task.createdAt, lastMonthStart),
+          lte(task.createdAt, lastMonthEnd)
+        )
+      );
+
+    const completedTaskCount = thisMonthCompletedTasks.length;
+    const completedTaskDifference =
+      completedTaskCount - lastMonthCompletedTasks.length;
+
+    const thisMonthOverdueTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          ne(task.status, "Done"),
+          lt(task.dueDate, now),
+          gte(task.createdAt, thisMonthStart),
+          lte(task.createdAt, thisMonthEnd)
+        )
+      );
+
+    const lastMonthOverdueTasks = await db
+      .select()
+      .from(task)
+      .where(
+        and(
+          eq(task.projectId, projectId),
+          eq(task.workspaceId, workspaceId),
+          ne(task.status, "Done"),
+          lt(task.dueDate, now),
+          gte(task.createdAt, lastMonthStart),
+          lte(task.createdAt, lastMonthEnd)
+        )
+      );
+
+    const overdueTaskCount = thisMonthOverdueTasks.length;
+    const overdueTaskDifference =
+      overdueTaskCount - lastMonthOverdueTasks.length;
+
+    return {
+      taskCount,
+      taskDifference,
+      assignedTaskCount,
+      assignedTaskDifference,
+      completedTaskCount,
+      completedTaskDifference,
+      incompleteTaskCount,
+      incompleteTaskDifference,
+      overdueTaskCount,
+      overdueTaskDifference,
+    };
   }),
 
   create: workspaceProcedure
