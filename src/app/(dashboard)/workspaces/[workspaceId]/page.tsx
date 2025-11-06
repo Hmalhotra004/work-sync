@@ -28,7 +28,7 @@ const WorkspaceIdPage = async ({ params }: Props) => {
   const queryClient = getQueryClient();
 
   void queryClient.prefetchQuery(
-    trpc.workspace.getOne.queryOptions({ workspaceId })
+    trpc.workspace.analytics.queryOptions({ workspaceId })
   );
 
   return (
