@@ -1,6 +1,6 @@
 "use client";
 
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import TaskBreadcrumbs from "@/components/tasks/TaskBreadcrumbs";
 import TaskDescription from "@/components/tasks/TaskDescription";
 import TaskOverview from "@/components/tasks/TaskOverview";

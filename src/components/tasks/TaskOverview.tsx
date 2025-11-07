@@ -1,4 +1,4 @@
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import MemberAvatar from "@/components/member/MemberAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

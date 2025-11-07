@@ -1,4 +1,4 @@
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

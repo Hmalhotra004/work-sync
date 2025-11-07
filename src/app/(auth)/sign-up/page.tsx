@@ -1,7 +1,7 @@
 "use client";
 
 import AlertError from "@/components/AlertError";
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import WorkspaceForm from "@/components/workspace/WorkspaceForm";
 

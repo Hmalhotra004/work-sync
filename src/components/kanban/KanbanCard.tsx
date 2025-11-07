@@ -1,6 +1,6 @@
 "use client";
 
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import MemberAvatar from "@/components/member/MemberAvatar";
 import TaskActions from "@/components/tasks/TaskActions";
 import TaskDate from "@/components/tasks/TaskDate";

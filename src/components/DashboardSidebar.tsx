@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import DottedSeparator from "./DottedSeparator";
+import DottedSeparator from "./dotted-separator";
 import Navigation from "./Navigation";
-import WorkspaceSwitcher from "./WorkspaceSwitcher";
 import Projects from "./project/Projects";
+import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 const DashboardSidebar = () => {
   return (

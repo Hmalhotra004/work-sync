@@ -1,6 +1,6 @@
 "use client";
 
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import Loader from "@/components/Loader";
 import TaskForm from "@/components/tasks/TaskForm";
 import { Button } from "@/components/ui/button";

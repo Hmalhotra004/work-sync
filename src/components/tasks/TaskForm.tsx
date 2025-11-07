@@ -1,6 +1,6 @@
 "use client";
 
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
 import MemberAvatar from "@/components/member/MemberAvatar";

@@ -1,6 +1,6 @@
 "use client";
 import AnalyticsCard from "@/components/analytics/AnalyticsCard";
-import DottedSeparator from "@/components/DottedSeparator";
+import DottedSeparator from "@/components/dotted-separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
