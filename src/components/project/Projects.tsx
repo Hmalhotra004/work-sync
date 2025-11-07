@@ -45,7 +45,7 @@ const Projects = () => {
 
       {data?.projects.map((project) => {
         const href = `/workspaces/${workspaceId}/projects/${project.id}`;
-        const isActive = pathname === href;
+        const isActive = pathname.includes(href);
 
         return (
           <Link
