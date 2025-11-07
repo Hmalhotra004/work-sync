@@ -23,8 +23,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import AlertError from "@/components/alert-error";
 import FormInput from "@/components/form/FormInput";
+import AlertError from "@/components/ui/alert-error";
 import { authClient } from "@/lib/authClient";
 
 interface Props {

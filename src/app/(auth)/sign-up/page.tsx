@@ -1,8 +1,8 @@
 "use client";
 
-import AlertError from "@/components/alert-error";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
+import AlertError from "@/components/ui/alert-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DottedSeparator from "@/components/ui/dotted-separator";

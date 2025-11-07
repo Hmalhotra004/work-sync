@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import AlertError from "@/components/alert-error";
+import AlertError from "@/components/ui/alert-error";
 import {
   Card,
   CardContent,

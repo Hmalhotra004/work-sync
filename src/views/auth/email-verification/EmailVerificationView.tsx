@@ -1,7 +1,7 @@
 "use client";
 
-import AlertError from "@/components/alert-error";
 import Loader from "@/components/Loader";
+import AlertError from "@/components/ui/alert-error";
 import { Button } from "@/components/ui/button";
 import useOTPExpire from "@/hooks/useOTPExpire";
 import { authClient } from "@/lib/authClient";

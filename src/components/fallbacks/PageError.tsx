@@ -1,6 +1,6 @@
 "use client";
 
-import AlertError from "@/components/alert-error";
+import AlertError from "@/components/ui/alert-error";
 
 interface Props {
   error: Error;

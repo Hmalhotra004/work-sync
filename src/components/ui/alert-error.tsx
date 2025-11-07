@@ -1,5 +1,5 @@
 import { OctagonAlertIcon } from "lucide-react";
-import { Alert, AlertTitle } from "./ui/alert";
+import { Alert, AlertTitle } from "./alert";
 
 interface Props {
   error: string;
