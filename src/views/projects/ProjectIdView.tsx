@@ -4,9 +4,8 @@ import TasksSwitcher from "@/components/tasks/TasksSwitcher";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { BarChartIcon, PencilIcon } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import Link from "next/link";
-import ProjectAnalyticsView from "./ProjectAnalyticsView";
 
 interface Props {
   workspaceId: string;
@@ -33,7 +32,7 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
         </div>
 
         <div className="flex items-center gap-x-4">
-          <Button
+          {/* <Button
             variant="secondary"
             size="sm"
             asChild
@@ -43,7 +42,7 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
             >
               <BarChartIcon className="size-4 mr-2" /> Analytics
             </Link>
-          </Button>
+          </Button> */}
 
           <Button
             variant="secondary"
@@ -58,11 +57,6 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
           </Button>
         </div>
       </div>
-
-      <ProjectAnalyticsView
-        projectId={projectId}
-        workspaceId={workspaceId}
-      />
 
       <TasksSwitcher
         workspaceId={workspaceId}
