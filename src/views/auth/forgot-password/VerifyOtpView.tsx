@@ -27,7 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import AlertError from "@/components/AlertError";
+import AlertError from "@/components/alert-error";
 import {
   InputOTP,
   InputOTPGroup,

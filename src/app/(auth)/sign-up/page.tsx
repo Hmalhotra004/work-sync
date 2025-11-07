@@ -1,6 +1,6 @@
 "use client";
 
-import AlertError from "@/components/AlertError";
+import AlertError from "@/components/alert-error";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";
