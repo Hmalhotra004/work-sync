@@ -10,11 +10,11 @@ import { FcGoogle } from "react-icons/fc";
 import { z } from "zod";
 
 import AlertError from "@/components/AlertError";
-import DottedSeparator from "@/components/dotted-separator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import {
   Form,
   FormControl,

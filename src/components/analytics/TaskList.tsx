@@ -1,6 +1,6 @@
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
 import { TaskGetManyType } from "@/types";
 import { formatDistanceToNow } from "date-fns";

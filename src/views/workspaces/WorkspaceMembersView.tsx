@@ -1,7 +1,7 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import Member from "@/components/member/Member";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 

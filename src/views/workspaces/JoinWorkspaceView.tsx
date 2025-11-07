@@ -1,7 +1,7 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
 

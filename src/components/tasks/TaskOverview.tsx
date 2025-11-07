@@ -1,7 +1,7 @@
-import DottedSeparator from "@/components/dotted-separator";
 import MemberAvatar from "@/components/member/MemberAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { TaskDetailsType } from "@/types";
 import { PencilIcon } from "lucide-react";
 import Link from "next/link";

@@ -1,7 +1,7 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useTRPC } from "@/trpc/client";
 import { useRouter } from "next/navigation";

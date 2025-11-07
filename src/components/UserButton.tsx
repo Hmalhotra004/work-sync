@@ -3,9 +3,9 @@
 import { authClient } from "@/lib/authClient";
 import { LogOutIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import DottedSeparator from "./dotted-separator";
 import Loader from "./Loader";
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import DottedSeparator from "./ui/dotted-separator";
 
 import {
   DropdownMenu,

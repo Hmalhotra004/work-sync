@@ -1,10 +1,10 @@
 "use client";
 
 import AlertError from "@/components/AlertError";
-import DottedSeparator from "@/components/dotted-separator";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { Input } from "@/components/ui/input";
 import WorkspaceForm from "@/components/workspace/WorkspaceForm";
 import { useConfirm } from "@/hooks/useConfirm";

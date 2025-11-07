@@ -1,7 +1,7 @@
-import DottedSeparator from "@/components/dotted-separator";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { useCreateProjectModal } from "@/hooks/useCreateProjectModal";
 import { ProjectType } from "@/types";
 import { PlusIcon } from "lucide-react";

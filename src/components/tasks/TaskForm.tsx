@@ -1,6 +1,5 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import FormInput from "@/components/form/FormInput";
 import Loader from "@/components/Loader";
 import MemberAvatar from "@/components/member/MemberAvatar";
@@ -8,6 +7,7 @@ import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import DatePicker from "@/components/ui/date-picker";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProjectId } from "@/hooks/useProjectId";

@@ -1,9 +1,9 @@
 "use client";
 
-import DottedSeparator from "@/components/dotted-separator";
 import TaskBreadcrumbs from "@/components/tasks/TaskBreadcrumbs";
 import TaskDescription from "@/components/tasks/TaskDescription";
 import TaskOverview from "@/components/tasks/TaskOverview";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 

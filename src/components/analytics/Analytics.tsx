@@ -1,4 +1,4 @@
-import DottedSeparator from "@/components/dotted-separator";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AnalyticsType } from "@/types";
 import AnalyticsCard from "./AnalyticsCard";

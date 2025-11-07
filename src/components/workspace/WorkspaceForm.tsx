@@ -9,10 +9,10 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import DottedSeparator from "@/components/dotted-separator";
 import FormInput from "@/components/form/FormInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { cn } from "@/lib/utils";
 import { createWorkspaceSchema } from "@/schemas/workspace/schema";
 import { useTRPC } from "@/trpc/client";

@@ -1,5 +1,5 @@
-import DottedSeparator from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
+import DottedSeparator from "@/components/ui/dotted-separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
