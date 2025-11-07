@@ -2,6 +2,7 @@
 
 import { authClient } from "@/lib/authClient";
 import { LogOutIcon } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Loader from "./Loader";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -43,11 +44,22 @@ const UserButton = () => {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="outline-none relative">
-        <Avatar className="size-10 hover:opacity-75 transition border border-border-300 cursor-pointer">
-          <AvatarFallback className="bg-background-200 font-medium text-foreground-500 flex items-center justify-center">
-            {avatarFallback}
-          </AvatarFallback>
-        </Avatar>
+        {user.image ? (
+          <div className="size-10 relative rounded-full overflow-hidden cursor-pointer hover:opacity-75">
+            <Image
+              src={user.image}
+              alt="User Image"
+              fill
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <Avatar className="size-10 hover:opacity-75 transition border border-border-300 cursor-pointer">
+            <AvatarFallback className="bg-background-200 font-medium text-foreground-500 flex items-center justify-center">
+              {avatarFallback}
+            </AvatarFallback>
+          </Avatar>
+        )}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -57,11 +69,22 @@ const UserButton = () => {
         sideOffset={10}
       >
         <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
-          <Avatar className="size-[52px] border border-border-300 cursor-pointer">
-            <AvatarFallback className="bg-background-200 text-xl font-medium text-foreground-500 flex items-center justify-center">
-              {avatarFallback}
-            </AvatarFallback>
-          </Avatar>
+          {user.image ? (
+            <div className="size-[52px] relative rounded-full overflow-hidden cursor-pointer hover:opacity-75">
+              <Image
+                src={user.image}
+                alt="User Image"
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <Avatar className="size-[52px] hover:opacity-75 transition border border-border-300 cursor-pointer">
+              <AvatarFallback className="bg-background-200 font-medium text-foreground-500 flex items-center justify-center">
+                {avatarFallback}
+              </AvatarFallback>
+            </Avatar>
+          )}
 
           <div className="flex flex-col items-center justify-center gap-y-1">
             <p className="text-sm font-medium text-foreground">{user.name}</p>

@@ -69,6 +69,26 @@ const SignInView = () => {
     );
   }
 
+  function onSocial(provider: "google" | "github") {
+    setError(null);
+    setPending(true);
+
+    authClient.signIn.social(
+      {
+        provider: provider,
+        callbackURL: "/",
+      },
+      {
+        onError: ({ error }) => {
+          setError(error.message);
+        },
+        onResponse: () => {
+          setPending(false);
+        },
+      }
+    );
+  }
+
   return (
     <Card className="w-full h-full md:w-[486px] border-none shadow-none">
       <CardHeader className="flex items-center justify-center text-center px-7 pt-1">
@@ -148,6 +168,7 @@ const SignInView = () => {
           size="lg"
           className="w-full"
           disabled={pending}
+          onClick={() => onSocial("google")}
         >
           <FcGoogle className="size-5" />
         </Button>
@@ -156,6 +177,7 @@ const SignInView = () => {
           size="lg"
           className="w-full"
           disabled={pending}
+          onClick={() => onSocial("github")}
         >
           <FaGithub className="size-5" />
         </Button>

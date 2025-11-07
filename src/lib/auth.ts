@@ -5,6 +5,13 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins";
 import { sendEmail } from "./sendEmail";
 
+import {
+  githubClientId,
+  githubClientSecret,
+  googleClientId,
+  googleClientSecret,
+} from "@/constants";
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -12,6 +19,10 @@ export const auth = betterAuth({
       ...schema,
     },
   }),
+  socialProviders: {
+    github: { clientId: githubClientId, clientSecret: githubClientSecret },
+    google: { clientId: googleClientId, clientSecret: googleClientSecret },
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
