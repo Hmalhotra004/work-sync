@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
@@ -25,6 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { authClient } from "@/lib/authClient";
 
 interface Props {
   user: UserType;
@@ -34,7 +35,6 @@ const ProfileForm = ({ user }: Props) => {
   const [isPending, setIsPending] = useState(false);
   const [preview, setPreview] = useState(user.image ?? null);
   const [file, setFile] = useState<File | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const trpc = useTRPC();
@@ -56,7 +56,11 @@ const ProfileForm = ({ user }: Props) => {
           trpc.profile.getProfile.queryOptions({ id: user.id })
         );
         setPreview(data.image);
-        setIsEditing(false);
+        form.reset({
+          id: data.id,
+          name: data.name,
+          image: data.image ?? undefined,
+        });
         toast.success("Profile updated");
       },
       onError: (error) => toast.error(error.message),
@@ -150,6 +154,15 @@ const ProfileForm = ({ user }: Props) => {
         name: values.name,
         image: imageUrl,
       });
+
+      await authClient.updateUser(
+        { name: values.name, image: imageUrl },
+        {
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        }
+      );
     } catch (err) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -161,9 +174,7 @@ const ProfileForm = ({ user }: Props) => {
     }
   };
 
-  useEffect(() => {
-    setIsEditing(!form.formState.isDirty && preview === user.image);
-  }, [form.formState.isDirty, preview, user.image]);
+  const showActions = form.formState.isDirty || preview !== user.image;
 
   return (
     <Form {...form}>
@@ -259,12 +270,14 @@ const ProfileForm = ({ user }: Props) => {
           )}
         />
 
-        <DottedSeparator className={cn("transition", isEditing && "hidden")} />
+        <DottedSeparator
+          className={cn("transition", !showActions && "hidden")}
+        />
 
         <div
           className={cn(
             "flex items-center justify-between",
-            isEditing && "hidden"
+            !showActions && "hidden"
           )}
         >
           <Button
