@@ -1,7 +1,9 @@
 import { ErrorBoundaryWrapper } from "@/components/fallbacks/ErrorBoundaryWrapper";
 import PageLoading from "@/components/fallbacks/PageLoading";
 import { auth } from "@/lib/auth";
+import { getQueryClient, trpc } from "@/trpc/server";
 import SettingsView from "@/views/profile/SettingsView";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -17,16 +19,20 @@ const ProfileSettingsPage = async () => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  const user = session.user;
+  const id = session.user.id;
+
+  const queryClient = getQueryClient();
+
+  void queryClient.prefetchQuery(trpc.profile.getProfile.queryOptions({ id }));
 
   return (
-    // <HydrationBoundary state={dehydrate(queryClient)}>
-    <Suspense fallback={<PageLoading />}>
-      <ErrorBoundaryWrapper>
-        <SettingsView user={user} />
-      </ErrorBoundaryWrapper>
-    </Suspense>
-    // </HydrationBoundary>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Suspense fallback={<PageLoading />}>
+        <ErrorBoundaryWrapper>
+          <SettingsView id={id} />
+        </ErrorBoundaryWrapper>
+      </Suspense>
+    </HydrationBoundary>
   );
 };
 

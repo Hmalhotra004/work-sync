@@ -3,12 +3,12 @@
 import { authClient } from "@/lib/authClient";
 import { LogOutIcon, SettingsIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loader from "./Loader";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import DottedSeparator from "./ui/dotted-separator";
 
-import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,

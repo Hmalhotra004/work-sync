@@ -100,3 +100,5 @@ export type CalendarEventType = {
   };
   status: TaskStatusType;
 };
+
+export type UserType = inferRouterOutputs<AppRouter>["profile"]["getProfile"];

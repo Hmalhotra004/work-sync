@@ -5,15 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { User } from "better-auth";
+import { useTRPC } from "@/trpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 
 interface Props {
-  user: User;
+  id: string;
 }
 
-const SettingsView = ({ user }: Props) => {
+const SettingsView = ({ id }: Props) => {
   const { theme, setTheme } = useTheme();
+  const trpc = useTRPC();
+
+  const { data: user } = useSuspenseQuery(
+    trpc.profile.getProfile.queryOptions({ id })
+  );
 
   return (
     <div className="max-w-5xl mx-auto container h-full w-full flex flex-col gap-y-2">
