@@ -4,17 +4,15 @@ import FormInput from "@/components/form/FormInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import DottedSeparator from "@/components/ui/dotted-separator";
-import { authClient } from "@/lib/authClient";
 import { cn } from "@/lib/utils";
 import { updateUserSchema } from "@/schemas/profile/schema";
 import { useTRPC } from "@/trpc/client";
+import { UserType } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import type { User as UserType } from "better-auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
@@ -33,13 +31,14 @@ interface Props {
 }
 
 const ProfileForm = ({ user }: Props) => {
-  const trpc = useTRPC();
-  const router = useRouter();
-
   const [isPending, setIsPending] = useState(false);
   const [preview, setPreview] = useState(user.image ?? null);
   const [file, setFile] = useState<File | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof updateUserSchema>>({
     resolver: zodResolver(updateUserSchema),
@@ -49,6 +48,20 @@ const ProfileForm = ({ user }: Props) => {
       image: user.image ?? undefined,
     },
   });
+
+  const updateProfile = useMutation(
+    trpc.profile.update.mutationOptions({
+      onSuccess: async (data) => {
+        await queryClient.invalidateQueries(
+          trpc.profile.getProfile.queryOptions({ id: user.id })
+        );
+        setPreview(data.image);
+        setIsEditing(false);
+        toast.success("Profile updated");
+      },
+      onError: (error) => toast.error(error.message),
+    })
+  );
 
   const deleteProfileImage = useMutation(
     trpc.profile.deleteProfileImage.mutationOptions()
@@ -107,8 +120,8 @@ const ProfileForm = ({ user }: Props) => {
 
   function resetForm() {
     form.reset();
-    setPreview(user.image ?? null);
     setFile(null);
+    setPreview(user.image ?? null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -132,17 +145,11 @@ const ProfileForm = ({ user }: Props) => {
         }
       }
 
-      await authClient.updateUser(
-        { name: values.name, image: imageUrl },
-        {
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        }
-      );
-
-      resetForm();
-      router.refresh();
+      await updateProfile.mutateAsync({
+        id: values.id,
+        name: values.name,
+        image: imageUrl,
+      });
     } catch (err) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -153,6 +160,10 @@ const ProfileForm = ({ user }: Props) => {
       setIsPending(false);
     }
   };
+
+  useEffect(() => {
+    setIsEditing(!form.formState.isDirty && preview === user.image);
+  }, [form.formState.isDirty, preview, user.image]);
 
   return (
     <Form {...form}>
@@ -187,12 +198,12 @@ const ProfileForm = ({ user }: Props) => {
             <div className="flex flex-col gap-y-2">
               <div className="flex items-center gap-x-5">
                 {preview ? (
-                  <div className="relative size-[72px] rounded-md">
+                  <div className="relative size-[72px] rounded-full">
                     <Image
                       src={preview}
                       alt="Profile Image"
                       fill
-                      className="object-cover rounded-md"
+                      className="object-cover rounded-full"
                     />
                   </div>
                 ) : (
@@ -248,17 +259,12 @@ const ProfileForm = ({ user }: Props) => {
           )}
         />
 
-        <DottedSeparator
-          className={cn(
-            "transition",
-            !form.formState.isDirty && preview === user.image && "hidden"
-          )}
-        />
+        <DottedSeparator className={cn("transition", isEditing && "hidden")} />
 
         <div
           className={cn(
             "flex items-center justify-between",
-            !form.formState.isDirty && preview === user.image && "hidden"
+            isEditing && "hidden"
           )}
         >
           <Button
