@@ -4,11 +4,12 @@ import FormInput from "@/components/form/FormInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import DottedSeparator from "@/components/ui/dotted-separator";
+import { authClient } from "@/lib/authClient";
 import { cn } from "@/lib/utils";
 import { updateUserSchema } from "@/schemas/profile/schema";
 import { useTRPC } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { User as UserType } from "better-auth";
 import { ImageIcon } from "lucide-react";
 import Image from "next/image";
@@ -33,7 +34,6 @@ interface Props {
 
 const ProfileForm = ({ user }: Props) => {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const [isPending, setIsPending] = useState(false);
@@ -44,6 +44,7 @@ const ProfileForm = ({ user }: Props) => {
   const form = useForm<z.infer<typeof updateUserSchema>>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
+      id: user.id,
       name: user.name ?? "",
       image: user.image ?? undefined,
     },
@@ -59,7 +60,7 @@ const ProfileForm = ({ user }: Props) => {
 
   async function uploadImageToCloudinary(file: File) {
     const { cloudName, apiKey, timestamp, signature, folder } =
-      await getSignature.mutateAsync({ folder: "Workspace" });
+      await getSignature.mutateAsync({ folder: "Profile" });
 
     const formData = new FormData();
     formData.append("file", file);
@@ -118,7 +119,7 @@ const ProfileForm = ({ user }: Props) => {
 
       if (file) {
         if (user.image) {
-          await deleteProfileImage.mutateAsync();
+          await deleteProfileImage.mutateAsync({ id: user.id });
         }
 
         imageUrl = await uploadImageToCloudinary(file);
@@ -126,12 +127,22 @@ const ProfileForm = ({ user }: Props) => {
         if (preview) {
           imageUrl = preview;
         } else {
-          await deleteProfileImage.mutateAsync();
+          await deleteProfileImage.mutateAsync({ id: user.id });
           imageUrl = undefined;
         }
       }
 
+      await authClient.updateUser(
+        { name: values.name, image: imageUrl },
+        {
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        }
+      );
+
       resetForm();
+      router.refresh();
     } catch (err) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -240,14 +251,14 @@ const ProfileForm = ({ user }: Props) => {
         <DottedSeparator
           className={cn(
             "transition",
-            !form.formState.isDirty && !file && "hidden"
+            !form.formState.isDirty && preview === user.image && "hidden"
           )}
         />
 
         <div
           className={cn(
             "flex items-center justify-between",
-            !form.formState.isDirty && !file && "hidden"
+            !form.formState.isDirty && preview === user.image && "hidden"
           )}
         >
           <Button
@@ -256,10 +267,6 @@ const ProfileForm = ({ user }: Props) => {
             size="lg"
             onClick={() => resetForm()}
             disabled={isPending}
-            className={cn(
-              "transition-opacity",
-              !form.formState.isDirty && !file && "hidden"
-            )}
           >
             Cancel
           </Button>
