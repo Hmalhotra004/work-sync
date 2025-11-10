@@ -46,10 +46,8 @@ const SettingsView = ({ user }: Props) => {
               variant="teritary"
               type="button"
               className="max-md:mt-6 w-fit ml-auto"
-              // disabled={deleteWorkspace.isPending}
-              // onClick={handleDelete}
             >
-              {0 ? <Spinner /> : "Change Email"}
+              Change Email
             </Button>
           </div>
 
@@ -65,16 +63,17 @@ const SettingsView = ({ user }: Props) => {
               variant="teritary"
               type="button"
               className="max-md:mt-6 w-fit ml-auto"
-              // disabled={deleteWorkspace.isPending}
-              // onClick={handleDelete}
             >
-              {0 ? <Spinner /> : "Change Password"}
+              Change Password
             </Button>
           </div>
 
           <div className="flex justify-between">
             <h3 className="font-bold">Dark Mode</h3>
-            <Switch />
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={(val) => setTheme(val ? "dark" : "light")}
+            />
           </div>
         </CardContent>
       </Card>
