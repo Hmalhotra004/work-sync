@@ -1,13 +1,14 @@
 "use client";
 
 import { authClient } from "@/lib/authClient";
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, SettingsIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Loader from "./Loader";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import DottedSeparator from "./ui/dotted-separator";
 
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,6 +92,16 @@ const UserButton = () => {
             <p className="text-xs text-foreground-500">{user.email}</p>
           </div>
         </div>
+
+        <DropdownMenuItem
+          className="h-10 flex items-center justify-center font-medium cursor-pointer transition"
+          asChild
+        >
+          <Link href="/profile/settings">
+            <SettingsIcon className="size-4 mr-1" />
+            settings
+          </Link>
+        </DropdownMenuItem>
 
         <DottedSeparator className="mb-1" />
 
