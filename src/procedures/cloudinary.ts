@@ -1,11 +1,21 @@
-import { FOLDER_PROJECT, FOLDER_WORKSPACE, TOP_FOLDER } from "@/constants";
 import cloudinary from "@/lib/cloudinary";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { z } from "zod";
 
+import {
+  FOLDER_PROFILE,
+  FOLDER_PROJECT,
+  FOLDER_WORKSPACE,
+  TOP_FOLDER,
+} from "@/constants";
+
 export const cloudinaryRouter = createTRPCRouter({
   getUploadSignature: protectedProcedure
-    .input(z.object({ folder: z.enum([FOLDER_WORKSPACE, FOLDER_PROJECT]) }))
+    .input(
+      z.object({
+        folder: z.enum([FOLDER_WORKSPACE, FOLDER_PROJECT, FOLDER_PROFILE]),
+      })
+    )
     .mutation(async ({ input }) => {
       const timestamp = Math.round(Date.now() / 1000);
 
