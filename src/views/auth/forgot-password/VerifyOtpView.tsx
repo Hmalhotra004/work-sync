@@ -5,7 +5,7 @@ import useOTPExpire from "@/hooks/useOTPExpire";
 import { authClient } from "@/lib/authClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -50,6 +50,11 @@ const VerifyOtpView = ({ email }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  const pathname = usePathname();
+  const parts = pathname.split("/").filter(Boolean);
+
+  const isProfile = parts.includes("profile");
+
   const router = useRouter();
   const { isExpired, minutes, seconds, reset } = useOTPExpire();
 
@@ -71,7 +76,13 @@ const VerifyOtpView = ({ email }: Props) => {
       fetchOptions: {
         onSuccess: () => {
           localStorage.setItem("otp", JSON.stringify(data.pin));
-          router.replace(`/forgot-password/change-password?email=${email}`);
+          if (isProfile) {
+            router.replace(
+              `/profile/reset-password/change-password?email=${email}`
+            );
+          } else {
+            router.replace(`/forgot-password/change-password?email=${email}`);
+          }
         },
         onError: ({ error }) => {
           setPending(false);

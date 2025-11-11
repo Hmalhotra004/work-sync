@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 
 interface Props {
   id: string;
@@ -69,8 +70,9 @@ const SettingsView = ({ id }: Props) => {
               variant="teritary"
               type="button"
               className="max-md:mt-6 w-fit ml-auto"
+              asChild
             >
-              Change Password
+              <Link href={`/profile/reset-password`}>Change Password</Link>
             </Button>
           </div>
 

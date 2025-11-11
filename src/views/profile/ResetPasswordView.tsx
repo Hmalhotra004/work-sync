@@ -1,0 +1,146 @@
+"use client";
+
+import FormInput from "@/components/form/FormInput";
+import Loader from "@/components/Loader";
+import AlertError from "@/components/ui/alert-error";
+import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/authClient";
+import { useTRPC } from "@/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const formSchema = z.object({
+  email: z.email().min(1, { error: "Email is required" }),
+});
+
+interface Props {
+  id: string;
+}
+
+const ResetPasswordView = ({ id }: Props) => {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  const router = useRouter();
+  const trpc = useTRPC();
+
+  const { data: user } = useSuspenseQuery(
+    trpc.profile.getProfile.queryOptions({ id })
+  );
+
+  const email = user.email;
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email,
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setError(null);
+    setPending(true);
+
+    await authClient.emailOtp.sendVerificationOtp(
+      {
+        email: values.email,
+        type: "forget-password",
+      },
+      {
+        onSuccess: () => {
+          setPending(false);
+          router.replace(
+            `/profile/reset-password/verify-otp?email=${values.email}`
+          );
+        },
+        onError: ({ error }) => {
+          setError(error.message);
+          setPending(false);
+        },
+      }
+    );
+  }
+
+  return (
+    <Card className="w-full h-full md:w-[486px] border-none shadow-none">
+      <CardHeader className="flex flex-col items-center justify-center text-center px-7 pt-1">
+        <CardTitle className="text-2xl">Reset Password</CardTitle>
+        <CardDescription>
+          Email associated with your account for verification
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="px-7">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
+            <FormField
+              name="email"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FormInput
+                      type="email"
+                      placeholder="Email"
+                      autoComplete="email"
+                      disabled
+                      field={field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {!!error && <AlertError error={error} />}
+
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={pending}
+            >
+              {pending ? <Loader /> : "Send OTP"}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+
+      <CardFooter className="mx-auto">
+        <p
+          onClick={() => {
+            if (pending) return;
+            router.back();
+          }}
+          className="cursor-pointer text-blue-700 text-sm hover:text-blue-500 transition"
+        >
+          Cancel
+        </p>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default ResetPasswordView;

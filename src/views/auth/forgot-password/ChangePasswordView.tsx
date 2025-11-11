@@ -2,7 +2,7 @@
 import Loader from "@/components/Loader";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -48,6 +48,13 @@ const ChangePasswordView = ({ email }: Props) => {
   const [pending, setPending] = useState(false);
 
   const router = useRouter();
+  const pathname = usePathname();
+  const parts = pathname.split("/").filter(Boolean);
+
+  // let key: keyof typeof pathnameMap | undefined;
+  const title = parts.includes("profile")
+    ? "Reset Password"
+    : "Forgot Password";
 
   const otp = JSON.parse(localStorage.getItem("otp") || "{}");
 
@@ -86,7 +93,7 @@ const ChangePasswordView = ({ email }: Props) => {
   return (
     <Card className="w-full h-full md:w-[486px] border-2 shadow-none">
       <CardHeader className="flex flex-col items-center justify-center text-center px-7 pt-1">
-        <CardTitle className="text-2xl">Forgot Password</CardTitle>
+        <CardTitle className="text-2xl">{title}</CardTitle>
         <CardDescription>Please enter new password.</CardDescription>
       </CardHeader>
 
