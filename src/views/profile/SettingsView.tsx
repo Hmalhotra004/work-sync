@@ -3,23 +3,18 @@
 import ProfileForm from "@/components/form/ProfileFom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
-interface Props {
-  id: string;
-}
-
-const SettingsView = ({ id }: Props) => {
+const SettingsView = () => {
   const { theme, setTheme } = useTheme();
   const trpc = useTRPC();
 
   const { data: user } = useSuspenseQuery(
-    trpc.profile.getProfile.queryOptions({ id })
+    trpc.profile.getProfile.queryOptions()
   );
 
   return (
@@ -101,10 +96,9 @@ const SettingsView = ({ id }: Props) => {
               variant="destructive"
               type="button"
               className="max-md:mt-6 w-fit ml-auto"
-              // disabled={deleteWorkspace.isPending}
-              // onClick={handleDelete}
+              asChild
             >
-              {0 ? <Spinner /> : "Delete Account"}
+              <Link href={`profile/delete-account`}>Delete Account</Link>
             </Button>
           </div>
         </CardContent>

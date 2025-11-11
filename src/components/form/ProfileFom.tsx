@@ -53,7 +53,7 @@ const ProfileForm = ({ user }: Props) => {
     trpc.profile.update.mutationOptions({
       onSuccess: async (data) => {
         await queryClient.invalidateQueries(
-          trpc.profile.getProfile.queryOptions({ id: user.id })
+          trpc.profile.getProfile.queryOptions()
         );
         setPreview(data.image);
         form.reset({
@@ -136,7 +136,7 @@ const ProfileForm = ({ user }: Props) => {
 
       if (file) {
         if (user.image) {
-          await deleteProfileImage.mutateAsync({ id: user.id });
+          await deleteProfileImage.mutateAsync();
         }
 
         imageUrl = await uploadImageToCloudinary(file);
@@ -144,7 +144,7 @@ const ProfileForm = ({ user }: Props) => {
         if (preview) {
           imageUrl = preview;
         } else {
-          await deleteProfileImage.mutateAsync({ id: user.id });
+          await deleteProfileImage.mutateAsync();
           imageUrl = undefined;
         }
       }

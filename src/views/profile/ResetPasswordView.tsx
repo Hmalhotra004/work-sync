@@ -34,11 +34,7 @@ const formSchema = z.object({
   email: z.email().min(1, { error: "Email is required" }),
 });
 
-interface Props {
-  id: string;
-}
-
-const ResetPasswordView = ({ id }: Props) => {
+const ResetPasswordView = () => {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -46,7 +42,7 @@ const ResetPasswordView = ({ id }: Props) => {
   const trpc = useTRPC();
 
   const { data: user } = useSuspenseQuery(
-    trpc.profile.getProfile.queryOptions({ id })
+    trpc.profile.getProfile.queryOptions()
   );
 
   const email = user.email;

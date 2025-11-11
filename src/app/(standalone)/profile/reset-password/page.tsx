@@ -19,17 +19,15 @@ const ResetPasswordPage = async () => {
     redirect(`/email-verification?email=${session.user.email}`);
   }
 
-  const id = session.user.id;
-
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(trpc.profile.getProfile.queryOptions({ id }));
+  void queryClient.prefetchQuery(trpc.profile.getProfile.queryOptions());
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<PageLoading />}>
         <ErrorBoundaryWrapper>
-          <ResetPasswordView id={id} />
+          <ResetPasswordView />
         </ErrorBoundaryWrapper>
       </Suspense>
     </HydrationBoundary>
