@@ -98,7 +98,7 @@ const SettingsView = () => {
               className="max-md:mt-6 w-fit ml-auto"
               asChild
             >
-              <Link href={`profile/delete-account`}>Delete Account</Link>
+              <Link href={`/profile/delete-account`}>Delete Account</Link>
             </Button>
           </div>
         </CardContent>
