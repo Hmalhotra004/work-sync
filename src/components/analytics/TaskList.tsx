@@ -25,7 +25,7 @@ const TaskList = ({ tasks, total, workspaceId }: Props) => {
           <Button
             variant="muted"
             size="icon"
-            onClick={open}
+            onClick={() => open()}
           >
             <PlusIcon className="size-4 text-foreground-400" />
           </Button>
