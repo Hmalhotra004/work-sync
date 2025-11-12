@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
-import { TaskStatusType } from "@/types";
+import { TaskStatusEnum, TaskStatusType } from "@/types";
 import { ReactNode } from "react";
 
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
@@ -57,7 +57,7 @@ const KanbanColumnHeader = ({ board, taskCount }: Props) => {
           variant="ghost"
           size="icon"
           className="size-5"
-          onClick={open}
+          onClick={() => open(board as TaskStatusEnum)}
         >
           <PlusIcon className="size-4 text-foreground-500" />
         </Button>

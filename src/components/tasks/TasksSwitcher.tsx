@@ -97,7 +97,7 @@ const TasksSwitcher = ({
             <Button
               size="sm"
               className="w-full lg:w-auto"
-              onClick={open}
+              onClick={() => open()}
             >
               <PlusIcon className="size-4" /> New
             </Button>

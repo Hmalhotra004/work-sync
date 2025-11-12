@@ -10,6 +10,7 @@ import DatePicker from "@/components/ui/date-picker";
 import DottedSeparator from "@/components/ui/dotted-separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
 import { useProjectId } from "@/hooks/useProjectId";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
 import { cn, TASKSTATUSMAP } from "@/lib/utils";
@@ -60,6 +61,8 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
     trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
   );
 
+  const { formStatus } = useCreateTaskModal();
+
   const form = useForm<z.infer<typeof createTaskSchema>>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
@@ -68,7 +71,7 @@ const TaskForm = ({ onCancel, initialValues, onSuccess }: Props) => {
       dueDate: initialValues?.dueDate
         ? new Date(initialValues.dueDate).toISOString()
         : "",
-      status: initialValues?.status ?? TaskStatusEnum.Todo,
+      status: initialValues?.status ?? formStatus ?? TaskStatusEnum.Todo,
       assigneeId: initialValues?.assigneeId ?? "",
       projectId: initialValues?.projectId ?? projectId ?? "",
       workspaceId: initialValues?.workspaceId ?? workspaceId,
