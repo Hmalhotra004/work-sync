@@ -77,6 +77,30 @@ export const workspaceRouter = createTRPCRouter({
     return userWorkspace;
   }),
 
+  getRole: workspaceProcedure.query(async ({ ctx, input }) => {
+    const { workspaceId } = input;
+
+    const [userMember] = await db
+      .select({ role: member.role })
+      .from(member)
+      .where(
+        and(
+          eq(member.workspaceId, workspaceId),
+          eq(member.userId, ctx.auth.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!userMember) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace member not found",
+      });
+    }
+
+    return userMember.role;
+  }),
+
   analytics: workspaceProcedure.query(async ({ ctx, input }) => {
     const { workspaceId } = input;
 
