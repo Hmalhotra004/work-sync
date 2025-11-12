@@ -1,6 +1,7 @@
 "use client";
 
 import { useConfirm } from "@/hooks/useConfirm";
+import { useProjectId } from "@/hooks/useProjectId";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,15 +16,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useProjectId } from "@/hooks/useProjectId";
+import { allowedMod } from "@/lib/utils";
+import { MemberRoleType } from "@/types";
 
 interface Props {
   id: string;
   projectId: string;
   children: ReactNode;
+  userRole: MemberRoleType;
 }
 
-const TaskActions = ({ children, id, projectId }: Props) => {
+const TaskActions = ({ children, id, projectId, userRole }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const workspaceId = useWorkspaceId();
@@ -70,6 +73,8 @@ const TaskActions = ({ children, id, projectId }: Props) => {
     deleteTask.mutateAsync({ taskId: id, projectId, workspaceId });
   }
 
+  const isAllowed = allowedMod.includes(userRole);
+
   return (
     <>
       <ConfirmDeleteTaskDialog />
@@ -100,22 +105,26 @@ const TaskActions = ({ children, id, projectId }: Props) => {
               </DropdownMenuItem>
             )}
 
-            <DropdownMenuItem
-              onClick={onOpenEditTask}
-              className="font-medium p-[10px]"
-            >
-              <PencilIcon className="size-4 mr-2 stroke-2" />
-              Edit Task
-            </DropdownMenuItem>
+            {isAllowed && (
+              <DropdownMenuItem
+                onClick={onOpenEditTask}
+                className="font-medium p-[10px]"
+              >
+                <PencilIcon className="size-4 mr-2 stroke-2" />
+                Edit Task
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuItem
-              onClick={onTaskDelete}
-              disabled={deleteTask.isPending}
-              className="text-amber-700 focus:text-amber-700 font-medium p-[10px]"
-            >
-              <TrashIcon className="size-4 mr-2 stroke-2" />
-              Delete Task
-            </DropdownMenuItem>
+            {isAllowed && (
+              <DropdownMenuItem
+                onClick={onTaskDelete}
+                disabled={deleteTask.isPending}
+                className="text-amber-700 focus:text-amber-700 font-medium p-[10px]"
+              >
+                <TrashIcon className="size-4 mr-2 stroke-2" />
+                Delete Task
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -4,7 +4,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
 import { useTasksFilters } from "@/hooks/useTasksFilters";
+import { allowedMod } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
+import { MemberRoleType } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
@@ -18,19 +20,24 @@ interface Props {
   workspaceId: string;
   projectId?: string;
   project: boolean;
+  role: MemberRoleType;
 }
 
-const TasksSwitcher = ({ projectId, workspaceId, project = false }: Props) => {
+const TasksSwitcher = ({
+  projectId,
+  workspaceId,
+  project = false,
+  role,
+}: Props) => {
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
 
+  const trpc = useTRPC();
+  const { open } = useCreateTaskModal();
+
   const [{ assigneeId, dueDate, search, status, projectId: id }] =
     useTasksFilters();
-
-  const trpc = useTRPC();
-
-  const { open } = useCreateTaskModal();
 
   const { data: tasks, isLoading: isLoadingTasks } = useQuery(
     trpc.task.getMany.queryOptions({
@@ -38,12 +45,10 @@ const TasksSwitcher = ({ projectId, workspaceId, project = false }: Props) => {
       projectId: projectId ?? id,
       assigneeId,
       dueDate,
-      status,
       search,
+      status,
     })
   );
-
-  const taskColumns = getTaskColumns(project);
 
   const tabs = [
     {
@@ -65,6 +70,9 @@ const TasksSwitcher = ({ projectId, workspaceId, project = false }: Props) => {
     },
   ];
 
+  const taskColumns = getTaskColumns(project, role);
+  const isAllowed = allowedMod.includes(role);
+
   return (
     <Tabs
       defaultValue={view}
@@ -84,13 +92,16 @@ const TasksSwitcher = ({ projectId, workspaceId, project = false }: Props) => {
               </TabsTrigger>
             ))}
           </TabsList>
-          <Button
-            size="sm"
-            className="w-full lg:w-auto"
-            onClick={open}
-          >
-            <PlusIcon className="size-4" /> New
-          </Button>
+
+          {isAllowed && (
+            <Button
+              size="sm"
+              className="w-full lg:w-auto"
+              onClick={open}
+            >
+              <PlusIcon className="size-4" /> New
+            </Button>
+          )}
         </div>
 
         <DottedSeparator className="my-4" />

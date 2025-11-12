@@ -2,9 +2,10 @@
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import TasksSwitcher from "@/components/tasks/TasksSwitcher";
 import { Button } from "@/components/ui/button";
+import { allowedAdmin } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { PencilIcon } from "lucide-react";
+import { BarChartIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -19,6 +20,12 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
     trpc.project.getOne.queryOptions({ workspaceId, projectId })
   );
 
+  const { data: role } = useSuspenseQuery(
+    trpc.workspace.getRole.queryOptions({ workspaceId })
+  );
+
+  const isAdmin = allowedAdmin.includes(role);
+
   return (
     <div className="flex flex-col gap-y-4">
       <div className="flex items-center justify-between">
@@ -32,7 +39,7 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
         </div>
 
         <div className="flex items-center gap-x-4">
-          {/* <Button
+          <Button
             variant="secondary"
             size="sm"
             asChild
@@ -42,23 +49,26 @@ const ProjectIdView = ({ projectId, workspaceId }: Props) => {
             >
               <BarChartIcon className="size-4 mr-2" /> Analytics
             </Link>
-          </Button> */}
-
-          <Button
-            variant="secondary"
-            size="sm"
-            asChild
-          >
-            <Link
-              href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings`}
-            >
-              <PencilIcon className="size-4 mr-2" /> Edit Project
-            </Link>
           </Button>
+
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              size="sm"
+              asChild
+            >
+              <Link
+                href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings`}
+              >
+                <PencilIcon className="size-4 mr-2" /> Edit Project
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
       <TasksSwitcher
+        role={role}
         workspaceId={workspaceId}
         projectId={projectId}
         project={false}
