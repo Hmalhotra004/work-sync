@@ -12,9 +12,10 @@ import { toast } from "sonner";
 
 interface Props {
   task: TaskType;
+  isAllowed: boolean;
 }
 
-const TaskDescription = ({ task }: Props) => {
+const TaskDescription = ({ task, isAllowed }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -62,15 +63,17 @@ const TaskDescription = ({ task }: Props) => {
       <div className="flex items-center justify-between">
         <p className="text-lg font-semibold">Overview</p>
 
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setisEditing((p) => !p)}
-          disabled={updateTask.isPending}
-        >
-          {isEditing ? <XIcon /> : <PencilIcon className="size-4 mr-1" />}
-          {isEditing ? "Cancel" : "Edit"}
-        </Button>
+        {isAllowed && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setisEditing((p) => !p)}
+            disabled={updateTask.isPending}
+          >
+            {isEditing ? <XIcon /> : <PencilIcon className="size-4 mr-1" />}
+            {isEditing ? "Cancel" : "Edit"}
+          </Button>
+        )}
       </div>
 
       <DottedSeparator className="my-4" />
