@@ -1,5 +1,8 @@
 "use client";
 
+import Loader from "@/components/Loader";
+import ProjectForm from "@/components/project/ProjectForm";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DottedSeparator from "@/components/ui/dotted-separator";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -7,9 +10,6 @@ import { useTRPC } from "@/trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import Loader from "@/components/Loader";
-import ProjectForm from "@/components/project/ProjectForm";
-import { Button } from "@/components/ui/button";
 import {
   useMutation,
   useQueryClient,
