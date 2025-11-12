@@ -14,23 +14,17 @@ const WorkspaceIdView = ({ workspaceId }: Props) => {
     trpc.workspace.analytics.queryOptions({ workspaceId })
   );
 
-  // const { data: projects, isLoading: isLoadingProjects } = useQuery(
-  //   trpc.project.getMany.queryOptions({ workspaceId })
-  // );
+  const { data: projects } = useSuspenseQuery(
+    trpc.project.getMany.queryOptions({ workspaceId })
+  );
 
-  // const { data: tasks, isLoading: isLoadingTasks } = useQuery(
-  //   trpc.task.getMany.queryOptions({ workspaceId })
-  // );
+  const { data: tasks } = useSuspenseQuery(
+    trpc.task.getMany.queryOptions({ workspaceId })
+  );
 
-  // const { data: members, isLoading: isLoadingMembers } = useQuery(
-  //   trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
-  // );
-
-  // const isLoading = isLoadingProjects || isLoadingTasks || isLoadingMembers;
-
-  // if (isLoading || !tasks || !projects || !members) {
-  //   return <PageLoading />;
-  // }
+  const { data: members } = useSuspenseQuery(
+    trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
+  );
 
   return (
     <div className="flex flex-col items-center justify-center h-full">

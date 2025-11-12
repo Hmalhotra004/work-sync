@@ -3,6 +3,10 @@ import { useCreateTaskModal } from "@/hooks/useCreateTaskModal";
 import { TaskStatusType } from "@/types";
 import { ReactNode } from "react";
 
+import { useWorkspaceId } from "@/hooks/useWorkspaceId";
+import { allowedMod } from "@/lib/utils";
+import { useTRPC } from "@/trpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   CircleCheckIcon,
   CircleDashedIcon,
@@ -27,8 +31,17 @@ const statusIconMap: Record<TaskStatusType, ReactNode> = {
 
 const KanbanColumnHeader = ({ board, taskCount }: Props) => {
   const { open } = useCreateTaskModal();
+  const workspaceId = useWorkspaceId();
+  const trpc = useTRPC();
+
+  const { data: role } = useSuspenseQuery(
+    trpc.workspace.getRole.queryOptions({ workspaceId })
+  );
 
   const icon = statusIconMap[board];
+
+  const isAllowed = allowedMod.includes(role);
+
   return (
     <div className="px-2 py-1.5 flex items-center justify-between">
       <div className="flex items-center gap-x-2">
@@ -38,14 +51,17 @@ const KanbanColumnHeader = ({ board, taskCount }: Props) => {
           {taskCount}
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-5"
-        onClick={open}
-      >
-        <PlusIcon className="size-4 text-foreground-500" />
-      </Button>
+
+      {isAllowed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-5"
+          onClick={open}
+        >
+          <PlusIcon className="size-4 text-foreground-500" />
+        </Button>
+      )}
     </div>
   );
 };

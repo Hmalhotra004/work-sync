@@ -10,27 +10,30 @@ import TaskDate from "./TaskDate";
 
 interface Props {
   data: TaskDetailsType;
+  isAllowed: boolean;
 }
 
-const TaskOverview = ({ data }: Props) => {
+const TaskOverview = ({ data, isAllowed }: Props) => {
   return (
     <div className="flex flex-col gap-y-4 col-span-1">
       <div className="bg-muted rounded-lg p-4">
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold">Overview</p>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            asChild
-          >
-            <Link
-              href={`/workspaces/${data.task.workspaceId}/projects/${data.task.projectId}/task/${data.task.id}/edit`}
+          {isAllowed && (
+            <Button
+              variant="secondary"
+              size="sm"
+              asChild
             >
-              <PencilIcon className="size-4 mr-1" />
-              Edit
-            </Link>
-          </Button>
+              <Link
+                href={`/workspaces/${data.task.workspaceId}/projects/${data.task.projectId}/task/${data.task.id}/edit`}
+              >
+                <PencilIcon className="size-4 mr-1" />
+                Edit
+              </Link>
+            </Button>
+          )}
         </div>
 
         <DottedSeparator className="my-4" />

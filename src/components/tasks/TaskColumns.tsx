@@ -4,14 +4,15 @@ import MemberAvatar from "@/components/member/MemberAvatar";
 import ProjectAvatar from "@/components/project/ProjectAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TaskGetManyType } from "@/types";
+import { MemberRoleType, TaskGetManyType } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDownIcon, MoreVerticalIcon } from "lucide-react";
 import TaskActions from "./TaskActions";
 import TaskDate from "./TaskDate";
 
 export const getTaskColumns = (
-  projectColumn: boolean
+  projectColumn: boolean,
+  userRole: MemberRoleType
 ): ColumnDef<TaskGetManyType>[] => {
   const columns: ColumnDef<TaskGetManyType>[] = [
     {
@@ -108,6 +109,7 @@ export const getTaskColumns = (
           <TaskActions
             id={id}
             projectId={projectId!}
+            userRole={userRole}
           >
             <Button
               variant="ghost"

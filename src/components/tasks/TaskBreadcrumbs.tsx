@@ -12,9 +12,10 @@ import { toast } from "sonner";
 interface Props {
   project: ProjectType;
   task: TaskType;
+  isAllowed: boolean;
 }
 
-const TaskBreadcrumbs = ({ project, task }: Props) => {
+const TaskBreadcrumbs = ({ project, task, isAllowed }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -81,16 +82,18 @@ const TaskBreadcrumbs = ({ project, task }: Props) => {
           {task.name}
         </p>
 
-        <Button
-          variant="destructive"
-          size="sm"
-          className="ml-auto"
-          onClick={handleDelete}
-          disabled={deleteTask.isPending}
-        >
-          <TrashIcon className="size-4 lg:mr-1" />
-          <span className="hidden lg:block">Delete task</span>
-        </Button>
+        {isAllowed && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="ml-auto"
+            onClick={handleDelete}
+            disabled={deleteTask.isPending}
+          >
+            <TrashIcon className="size-4 lg:mr-1" />
+            <span className="hidden lg:block">Delete task</span>
+          </Button>
+        )}
       </div>
     </>
   );
