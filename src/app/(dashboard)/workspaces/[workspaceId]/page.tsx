@@ -27,9 +27,18 @@ const WorkspaceIdPage = async ({ params }: Props) => {
 
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(
-    trpc.workspace.analytics.queryOptions({ workspaceId })
-  );
+  await Promise.all([
+    queryClient.prefetchQuery(
+      trpc.workspace.analytics.queryOptions({ workspaceId })
+    ),
+    queryClient.prefetchQuery(
+      trpc.project.getMany.queryOptions({ workspaceId })
+    ),
+    queryClient.prefetchQuery(trpc.task.getMany.queryOptions({ workspaceId })),
+    queryClient.prefetchQuery(
+      trpc.member.getWorkspaceMembers.queryOptions({ workspaceId })
+    ),
+  ]);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
