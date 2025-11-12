@@ -8,6 +8,7 @@ import { sendEmail } from "./sendEmail";
 import { githubClientId, githubClientSecret } from "@/constants";
 
 export const auth = betterAuth({
+  trustedOrigins: ["http://localhost:3000", "http://localhost:3001"],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
