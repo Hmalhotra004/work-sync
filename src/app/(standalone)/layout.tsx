@@ -1,6 +1,5 @@
+import Logo from "@/components/Logo";
 import UserButton from "@/components/UserButton";
-import Image from "next/image";
-import Link from "next/link";
 
 export default function StandaloneLayout({
   children,
@@ -11,14 +10,7 @@ export default function StandaloneLayout({
     <main className="min-h-screen bg-background-100">
       <div className="mx-auto max-w-screen-2xl p-4">
         <nav className="flex justify-between items-center h-fit">
-          <Link href="/">
-            <Image
-              src={"/logo.svg"}
-              alt="logo"
-              width={152}
-              height={56}
-            />
-          </Link>
+          <Logo textClassName="tracking-normal" />
 
           <UserButton />
         </nav>
