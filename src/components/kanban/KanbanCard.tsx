@@ -4,7 +4,9 @@ import MemberAvatar from "@/components/member/MemberAvatar";
 import TaskActions from "@/components/tasks/TaskActions";
 import TaskDate from "@/components/tasks/TaskDate";
 import DottedSeparator from "@/components/ui/dotted-separator";
+import { useTRPC } from "@/trpc/client";
 import { TaskGetManyType } from "@/types";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { MoreHorizontalIcon } from "lucide-react";
 
 interface Props {
@@ -12,6 +14,13 @@ interface Props {
 }
 
 const KanbanCard = ({ task }: Props) => {
+  const trpc = useTRPC();
+  const workspaceId = task.workspaceId;
+
+  const { data: role } = useSuspenseQuery(
+    trpc.workspace.getRole.queryOptions({ workspaceId })
+  );
+
   return (
     <div className="bg-white p-2.5 mb-1.5 rounded shadow-sm space-y-3">
       <div className="flex items-start justify-between gap-x-2">
@@ -19,6 +28,7 @@ const KanbanCard = ({ task }: Props) => {
         <TaskActions
           id={task.id}
           projectId={task.projectId!}
+          userRole={role}
         >
           <MoreHorizontalIcon className="size-[18px] stroke-1 shrink-0 text-neutral-700 hover:opacity-75 transition" />
         </TaskActions>
