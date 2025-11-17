@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Projectly",
+  title: "WorkSync",
   description: "A Project Manager",
 };
 
